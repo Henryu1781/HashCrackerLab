@@ -1,0 +1,41 @@
+.git/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
+*.log
+*.pot
+*.cap
+*.pcap
+
+# Resultados (não commitar dados sensíveis!)
+results/
+hashes/
+captures/
+logs/*.log
+temp/
+
+# Wordlists grandes
+wordlists/rockyou.txt
+wordlists/*.txt.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+*.bak
+*.backup

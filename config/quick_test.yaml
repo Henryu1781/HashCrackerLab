@@ -1,0 +1,43 @@
+# Configuração Simples - Teste Rápido
+experiment:
+  name: "quick_test"
+  description: "Teste rápido com poucos hashes"
+  seed: 42
+  
+  hash_generation:
+    count: 10  # Apenas 10 hashes
+    algorithms:
+      - name: "md5"
+        salt: false
+      - name: "sha256"
+        salt: true
+    
+    password_patterns:
+      - "test{}"      # test0, test1, test2...
+      - "password{}"  # password0, password1...
+  
+  cracking:
+    modes:
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou-small.txt"
+        rules: null
+    
+    workers:
+      gpu:
+        enabled: true
+        host: "localhost"
+      cpu:
+        enabled: false
+  
+  wifi:
+    enabled: false
+  
+  output:
+    base_dir: "results/{experiment_name}_{timestamp}"
+    logs: true
+    metrics: true
+    export_formats: ["csv", "json"]
+  
+  security:
+    isolated_network: true
+    auto_cleanup: false

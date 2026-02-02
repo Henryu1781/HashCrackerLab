@@ -1,0 +1,68 @@
+# Configuração Completa - Teste Extensivo
+experiment:
+  name: "full_algorithm_test"
+  description: "Teste completo de todos os algoritmos de hash"
+  seed: 123
+  
+  hash_generation:
+    count: 50  # 50 hashes por algoritmo
+    algorithms:
+      - name: "argon2"
+        cost: 16
+        iterations: 3
+      - name: "bcrypt"
+        cost: 10  # Reduzido para testes
+      - name: "scrypt"
+        n: 16384
+        r: 8
+        p: 1
+      - name: "pbkdf2_sha256"
+        iterations: 50000  # Reduzido para testes
+      - name: "sha256"
+        salt: true
+      - name: "sha1"
+        salt: false
+      - name: "md5"
+        salt: false
+    
+    password_patterns:
+      - "password{:03d}"
+      - "Test{:04d}!"
+      - "admin{}"
+      - "user_{}"
+  
+  cracking:
+    modes:
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou-small.txt"
+        rules: null
+      - type: "dictionary"
+        wordlist: "wordlists/custom.txt"
+        rules: "rules/best64.rule"
+      - type: "brute-force"
+        mask: "?l?l?l?l?l"  # 5 lowercase
+        max_time: 180  # 3 minutos
+    
+    workers:
+      gpu:
+        enabled: true
+        host: "orchestrator"
+        device: 0
+      cpu:
+        enabled: true
+        host: "cpu-tester"
+        threads: 4
+  
+  wifi:
+    enabled: false
+  
+  output:
+    base_dir: "results/{experiment_name}_{timestamp}"
+    logs: true
+    metrics: true
+    export_formats: ["csv", "json"]
+  
+  security:
+    isolated_network: true
+    auto_cleanup: true
+    cleanup_delay: 3600
