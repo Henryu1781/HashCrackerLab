@@ -236,6 +236,37 @@ python tools/wordlist_generator.py pattern \
 python orchestrator.py --config config/quick_test.yaml
 ```
 
+### 3. Teste de Captura de Handshake WiFi (LAB)
+
+**Na máquina Kali (Monitorização):**
+
+```bash
+sudo tools/capture_handshake.sh -s "LAB-SERVERS" -i wlan0 -t 60 -d 10
+```
+
+**Validação do ficheiro capturado:**
+
+```bash
+aircrack-ng captures/handshake_LAB-SERVERS_*.cap
+```
+
+### 4. Teste de Tráfego tipo Telnet (LAB)
+
+**Servidor (ex.: Arch ou Windows #1):**
+
+```bash
+python tools/generate_telnet_traffic.py --server --host 0.0.0.0 --port 2323
+```
+
+**Cliente (ex.: Windows #2):**
+
+```bash
+python tools/generate_telnet_traffic.py --client --host 192.168.100.10 --port 2323 \
+  --user labuser --password labpass
+```
+
+> Use apenas em LAB isolado e com autorização.
+
 ### 3. Ver Resultados
 
 ```bash

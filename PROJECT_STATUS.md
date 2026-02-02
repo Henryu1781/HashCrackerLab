@@ -25,6 +25,7 @@ Todos os componentes do Hash Cracker Lab estão implementados e funcionais.
 ### Ferramentas (100%)
 - ✅ `tools/validate_environment.py` - Validação de ambiente
 - ✅ `tools/run_immediate.py` - Execução imediata (1 comando)
+- ✅ `tools/generate_telnet_traffic.py` - Geração de tráfego tipo Telnet (LAB)
 - ✅ `tools/wordlist_generator.py` - Geração de wordlists
 - ✅ `tools/setup_network_isolation.sh` - Isolamento de rede
 - ✅ `tools/setup_test_ap.sh` - Setup de AP de teste

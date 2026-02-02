@@ -228,6 +228,23 @@ python tools/run_immediate.py
 ```
 Se o Hashcat não estiver instalado, a execução passa automaticamente para `--dry-run`.
 
+### Testes LAB (WiFi + Tráfego)
+
+**Captura de handshake (Kali):**
+```bash
+sudo tools/capture_handshake.sh -s "LAB-SERVERS" -i wlan0 -t 60 -d 10
+```
+
+**Tráfego tipo Telnet:**
+Servidor:
+```bash
+python tools/generate_telnet_traffic.py --server --host 0.0.0.0 --port 2323
+```
+Cliente:
+```bash
+python tools/generate_telnet_traffic.py --client --host 192.168.100.10 --port 2323 --user labuser --password labpass
+```
+
 ### Execução
 ```bash
 run_experiment --config ex1.yaml
