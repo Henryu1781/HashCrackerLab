@@ -33,6 +33,9 @@ from src.cracking_manager import CrackingManager
 from src.metrics_collector import MetricsCollector
 from src.network_manager import NetworkManager
 from src.cleanup_manager import CleanupManager
+from src.logger import setup_logger
+from src.config_validator import ConfigValidator
+from src.safe_hashes import SafeHashesManager
 
 class Orchestrator:
     """Orquestrador principal do Hash Cracker Lab"""
@@ -62,9 +65,18 @@ class Orchestrator:
     def _load_config(self) -> Dict:
         """Carregar e validar configuração YAML"""
         try:
-            with open(self.config_path, 'r') as f:
-                config = yaml.safe_load(f)
-            print(f"{Fore.GREEN}✓ Configuração carregada: {self.config_path}{Style.RESET_ALL}")
+            config, errors = ConfigValidator.load_and_validate(Path(self.config_path))
+            
+            if errors:
+                print(f"{Fore.RED}✗ Erros de configuração:{Style.RESET_ALL}")
+                for error in errors:
+                    print(f"  {Fore.RED}• {error}{Style.RESET_ALL}")
+                sys.exit(1)
+            
+            # Aplicar defaults
+            config = ConfigValidator.apply_defaults(config)
+            
+            print(f"{Fore.GREEN}✓ Configuração válida: {self.config_path}{Style.RESET_ALL}")
             return config
         except Exception as e:
             print(f"{Fore.RED}✗ Erro ao carregar configuração: {e}{Style.RESET_ALL}")
@@ -72,51 +84,43 @@ class Orchestrator:
     
     def _setup_output_dir(self) -> Path:
         """Criar diretório de output com timestamp"""
-        exp_name = self.config['experiment']['name']
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        output_template = self.config['experiment']['output']['base_dir']
-        output_path = output_template.format(
-            experiment_name=exp_name,
-            timestamp=timestamp
-        )
-        
-        output_dir = Path(output_path)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Criar subdiretórios
-        (output_dir / "hashes").mkdir(exist_ok=True)
-        (output_dir / "cracked").mkdir(exist_ok=True)
-        (output_dir / "logs").mkdir(exist_ok=True)
-        (output_dir / "metrics").mkdir(exist_ok=True)
-        
-        return output_dir
+        try:
+            exp_name = self.config.get('experiment', {}).get('name', 'experiment')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            output_config = self.config.get('experiment', {}).get('output', {})
+            output_template = output_config.get('base_dir', 'results/{experiment_name}_{timestamp}')
+            
+            output_path = output_template.format(
+                experiment_name=exp_name,
+                timestamp=timestamp
+            )
+            
+            output_dir = Path(output_path)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Criar subdiretórios
+            (output_dir / "hashes").mkdir(exist_ok=True)
+            (output_dir / "cracked").mkdir(exist_ok=True)
+            (output_dir / "logs").mkdir(exist_ok=True)
+            (output_dir / "metrics").mkdir(exist_ok=True)
+            
+            return output_dir
+        except Exception as e:
+            print(f"{Fore.RED}✗ Erro ao criar diretório de output: {e}{Style.RESET_ALL}")
+            sys.exit(1)
     
     def _setup_logging(self):
         """Configurar sistema de logging"""
         log_file = self.output_dir / "logs" / "orchestrator.log"
         
-        # Configurar logger
-        self.logger = logging.getLogger("Orchestrator")
-        self.logger.setLevel(logging.DEBUG)
-        
-        # Handler para arquivo
-        fh = logging.FileHandler(log_file)
-        fh.setLevel(logging.DEBUG)
-        
-        # Handler para console
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)
-        
-        # Formato
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        # Usar logger centralizado
+        self.logger = setup_logger(
+            "Orchestrator",
+            log_file=log_file,
+            level=logging.DEBUG,
+            console_level=logging.INFO
         )
-        fh.setFormatter(formatter)
-        ch.setFormatter(formatter)
-        
-        self.logger.addHandler(fh)
-        self.logger.addHandler(ch)
     
     def run_experiment(self):
         """Executar experiência completa"""
@@ -126,7 +130,7 @@ class Orchestrator:
             print(f"{Fore.CYAN}{'='*60}{Style.RESET_ALL}\n")
             
             # 1. Verificar isolamento de rede
-            if self.config['experiment']['security']['isolated_network']:
+            if self.config.get('experiment', {}).get('security', {}).get('isolated_network', False):
                 print(f"{Fore.YELLOW}[1/6] Verificando isolamento de rede...{Style.RESET_ALL}")
                 if not self.network_manager.verify_isolation():
                     self.logger.error("Rede não está isolada!")
@@ -137,6 +141,17 @@ class Orchestrator:
             print(f"{Fore.YELLOW}[2/6] Gerando hashes...{Style.RESET_ALL}")
             hashes_file = self.output_dir / "hashes" / "generated_hashes.json"
             hashes = self.hash_generator.generate_hashes(hashes_file)
+            
+            # Criar versão segura (sem passwords)
+            safe_hashes_file = self.output_dir / "hashes" / "hashes_safe.json"
+            SafeHashesManager.create_safe_version(hashes, safe_hashes_file)
+            self.logger.info(f"Versão segura de hashes salva em: {safe_hashes_file}")
+            
+            # Criar ficheiro de passwords (com aviso)
+            password_file = self.output_dir / "hashes" / ".passwords"
+            SafeHashesManager.create_password_file(hashes, password_file, encrypt=False)
+            self.logger.warning(f"⚠️  Passwords em plaintext em: {password_file} (DELETE APÓS USAR)")
+            
             print(f"{Fore.GREEN}✓ {len(hashes)} hashes gerados{Style.RESET_ALL}\n")
             
             # 3. Distribuir trabalho e executar cracking
@@ -164,8 +179,8 @@ class Orchestrator:
             print(f"{Fore.GREEN}✓ Relatório gerado{Style.RESET_ALL}\n")
             
             # 6. Limpeza (se configurado)
-            if self.config['experiment']['security']['auto_cleanup']:
-                delay = self.config['experiment']['security'].get('cleanup_delay', 0)
+            if self.config.get('experiment', {}).get('security', {}).get('auto_cleanup', False):
+                delay = self.config.get('experiment', {}).get('security', {}).get('cleanup_delay', 0)
                 print(f"{Fore.YELLOW}[6/6] Limpeza agendada para {delay}s...{Style.RESET_ALL}")
                 self.cleanup_manager.schedule_cleanup(self.output_dir, delay)
             

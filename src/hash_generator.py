@@ -68,10 +68,15 @@ class HashGenerator:
         """Gerar hash individual"""
         algo = algo_config['name']
         
+        # Validar algoritmo
+        valid_algos = ['argon2', 'bcrypt', 'scrypt', 'pbkdf2_sha256', 'sha256', 'sha1', 'md5']
+        if algo not in valid_algos:
+            raise ValueError(f"Algoritmo não suportado: {algo}. Suportados: {valid_algos}")
+        
         hash_data = {
             'uid': uid,
             'algorithm': algo,
-            'password': password,  # Guardado para verificação (NÃO fazer em produção!)
+            'password': password,  # Guardado para verificação (⚠️ NÃO fazer em produção! Dados sensíveis!)
             'timestamp': datetime.now().isoformat(),
         }
         

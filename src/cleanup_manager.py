@@ -129,14 +129,14 @@ class CleanupManager:
             import re
             
             # IPs privados
-            content = re.sub(r'\b192\.168\.\d{1,3}\.\d{1,3}\b', 'IP.REDACTED', content)
-            content = re.sub(r'\b10\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', 'IP.REDACTED', content)
+            content = re.sub(r'\b(?:192\.168|10|172\.1[6-9]|172\.2[0-9]|172\.3[01])\.\d{1,3}\.\d{1,3}\b', 'IP.REDACTED', content)
             
             # MACs
-            content = re.sub(r'\b([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})\b', 'MAC.REDACTED', content)
+            content = re.sub(r'\b(?:[0-9A-Fa-f]{2}[:-]){5}(?:[0-9A-Fa-f]{2})\b', 'MAC.REDACTED', content)
             
-            # Possíveis passwords em logs
-            content = re.sub(r'password["\']?\s*[:=]\s*["\']?[\w!@#$%^&*]+["\']?', 'password=REDACTED', content, flags=re.IGNORECASE)
+            # Possíveis passwords em logs (mais específico)
+            content = re.sub(r'(?:password|passwd|pwd)\s*[=:]\s*(["\']?)[\w!@#$%^&*.\-]{4,}(\1)', 
+                            'PASSWORD=REDACTED', content, flags=re.IGNORECASE)
             
             # Sobrescrever log
             with open(log_file, 'w') as f:

@@ -2,8 +2,6 @@
 # Setup script para Kali Linux (CPU Tester)
 # Gonçalo Ferro - VM CPU
 
-set -e
-
 echo "==================================="
 echo "Hash Cracker Lab - Setup Kali Linux"
 echo "Role: CPU Tester"
@@ -33,10 +31,10 @@ sudo apt install -y \
     build-essential
 
 echo -e "${YELLOW}[3/7] Configurando ambiente Python...${NC}"
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+python3 -m venv venv || { echo "Erro ao criar venv"; exit 1; }
+source venv/bin/activate || { echo "Erro ao ativar venv"; exit 1; }
+pip install --upgrade pip || echo "Aviso: Erro ao atualizar pip"
+pip install -r requirements.txt || { echo "Erro ao instalar dependências Python"; exit 1; }
 
 echo -e "${YELLOW}[4/7] Criando estrutura de diretórios...${NC}"
 mkdir -p {wordlists,rules,captures,results,logs,hashes,temp}
@@ -44,24 +42,45 @@ mkdir -p {wordlists,rules,captures,results,logs,hashes,temp}
 echo -e "${YELLOW}[5/7] Configurando wordlists...${NC}"
 # Kali já vem com rockyou.txt
 if [ -f "/usr/share/wordlists/rockyou.txt.gz" ]; then
-    gunzip -c /usr/share/wordlists/rockyou.txt.gz > wordlists/rockyou.txt
+    gunzip -c /usr/share/wordlists/rockyou.txt.gz > wordlists/rockyou.txt 2>/dev/null || \
+        echo -e "${YELLOW}Aviso: Falha ao descompactar rockyou.txt.${NC}"
 elif [ -f "/usr/share/wordlists/rockyou.txt" ]; then
-    cp /usr/share/wordlists/rockyou.txt wordlists/
+    cp /usr/share/wordlists/rockyou.txt wordlists/ 2>/dev/null || \
+        echo -e "${YELLOW}Aviso: Falha ao copiar rockyou.txt.${NC}"
+else
+    echo -e "${YELLOW}Aviso: rockyou.txt não encontrado em /usr/share/wordlists/.${NC}"
 fi
 
-head -n 10000 wordlists/rockyou.txt > wordlists/rockyou-small.txt 2>/dev/null || true
+if [ -f "wordlists/rockyou.txt" ]; then
+    head -n 10000 wordlists/rockyou.txt > wordlists/rockyou-small.txt 2>/dev/null || \
+        echo -e "${YELLOW}Aviso: Não foi possível criar wordlist pequena.${NC}"
+else
+    echo -e "${YELLOW}Aviso: rockyou.txt não encontrado. Pule este passo ou faça download manualmente.${NC}"
+fi
 
 echo -e "${YELLOW}[6/7] Configurando regras Hashcat...${NC}"
 if [ ! -d "rules" ] || [ -z "$(ls -A rules)" ]; then
     cp -r /usr/share/hashcat/rules/* rules/ 2>/dev/null || {
-        git clone https://github.com/hashcat/hashcat.git temp/hashcat-repo
-        cp -r temp/hashcat-repo/rules/* rules/
-        rm -rf temp/hashcat-repo
+        git clone https://github.com/hashcat/hashcat.git temp/hashcat-repo 2>/dev/null || {
+            echo -e "${YELLOW}Aviso: Falha ao clonar repositório hashcat. Pode continuar sem regras.${NC}"
+            mkdir -p rules
+            touch rules/.placeholder
+        }
+        if [ -d "temp/hashcat-repo/rules" ]; then
+            cp -r temp/hashcat-repo/rules/* rules/ 2>/dev/null || \
+                echo -e "${YELLOW}Aviso: Não foi possível copiar regras.${NC}"
+            rm -rf temp/hashcat-repo
+        fi
     }
 fi
 
 echo -e "${YELLOW}[7/7] Configurando permissões...${NC}"
-sudo usermod -a -G wireshark $USER
+if getent group wireshark > /dev/null; then
+    sudo usermod -a -G wireshark $USER 2>/dev/null || \
+        echo -e "${YELLOW}Aviso: Não foi possível adicionar ao grupo wireshark.${NC}"
+else
+    echo -e "${YELLOW}Aviso: Grupo wireshark não existe. Pode instalar manualmente.${NC}"
+fi
 
 echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║   Setup Concluído com Sucesso! ✓      ║${NC}"

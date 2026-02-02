@@ -2,8 +2,6 @@
 # Setup script para Arch Linux (Orquestrador + GPU)
 # Henrique Carvalho - VM Principal
 
-set -e
-
 echo "==================================="
 echo "Hash Cracker Lab - Setup Arch Linux"
 echo "Role: Orchestrator + GPU Tester"
@@ -42,20 +40,22 @@ echo -e "${YELLOW}[3/8] Verificando suporte GPU...${NC}"
 # NVIDIA
 if lspci | grep -i nvidia &> /dev/null; then
     echo "GPU NVIDIA detectada"
-    sudo pacman -S --needed --noconfirm nvidia nvidia-utils opencl-nvidia
+    sudo pacman -S --needed --noconfirm nvidia nvidia-utils opencl-nvidia 2>/dev/null || \
+        echo -e "${YELLOW}Aviso: Não foi possível instalar drivers NVIDIA. Continue manualmente se necessário.${NC}"
 fi
 
 # AMD
 if lspci | grep -i amd.*vga &> /dev/null; then
     echo "GPU AMD detectada"
-    sudo pacman -S --needed --noconfirm opencl-mesa
+    sudo pacman -S --needed --noconfirm opencl-mesa 2>/dev/null || \
+        echo -e "${YELLOW}Aviso: Não foi possível instalar suporte AMD GPU.${NC}"
 fi
 
 echo -e "${YELLOW}[4/8] Instalando dependências Python...${NC}"
-python -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+python -m venv venv || { echo "Erro ao criar venv"; exit 1; }
+source venv/bin/activate || { echo "Erro ao ativar venv"; exit 1; }
+pip install --upgrade pip || echo "Aviso: Erro ao atualizar pip"
+pip install -r requirements.txt || { echo "Erro ao instalar dependências Python"; exit 1; }
 
 echo -e "${YELLOW}[5/8] Criando estrutura de diretórios...${NC}"
 mkdir -p {wordlists,rules,captures,results,logs,hashes,temp}
@@ -67,18 +67,35 @@ if [ ! -f "wordlists/rockyou.txt" ]; then
 fi
 
 # Criar wordlist pequena para testes
-head -n 10000 wordlists/rockyou.txt > wordlists/rockyou-small.txt 2>/dev/null || true
+if [ -f "wordlists/rockyou.txt" ]; then
+    head -n 10000 wordlists/rockyou.txt > wordlists/rockyou-small.txt 2>/dev/null || \
+        echo -e "${YELLOW}Aviso: Não foi possível criar wordlist pequena.${NC}"
+else
+    echo -e "${YELLOW}Aviso: rockyou.txt não encontrado. Pule este passo ou faça download manualmente.${NC}"
+fi
 
 echo -e "${YELLOW}[7/8] Baixando regras do Hashcat...${NC}"
 if [ ! -d "rules" ] || [ -z "$(ls -A rules)" ]; then
-    git clone https://github.com/hashcat/hashcat.git temp/hashcat-repo
-    cp -r temp/hashcat-repo/rules/* rules/
-    rm -rf temp/hashcat-repo
+    git clone https://github.com/hashcat/hashcat.git temp/hashcat-repo 2>/dev/null || { 
+        echo -e "${YELLOW}Aviso: Falha ao clonar repositório hashcat. Pode continuar sem regras.${NC}"
+        mkdir -p rules
+        touch rules/.placeholder
+    }
+    if [ -d "temp/hashcat-repo/rules" ]; then
+        cp -r temp/hashcat-repo/rules/* rules/ 2>/dev/null || \
+            echo -e "${YELLOW}Aviso: Não foi possível copiar regras.${NC}"
+        rm -rf temp/hashcat-repo
+    fi
 fi
 
 echo -e "${YELLOW}[8/8] Configurando permissões...${NC}"
 # Adicionar utilizador ao grupo necessário para captura de rede
-sudo usermod -a -G wireshark $USER
+if getent group wireshark > /dev/null; then
+    sudo usermod -a -G wireshark $USER 2>/dev/null || \
+        echo -e "${YELLOW}Aviso: Não foi possível adicionar ao grupo wireshark.${NC}"
+else
+    echo -e "${YELLOW}Aviso: Grupo wireshark não existe. Pode instalar manualmente.${NC}"
+fi
 
 echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║   Setup Concluído com Sucesso! ✓      ║${NC}"

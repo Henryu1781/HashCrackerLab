@@ -24,6 +24,15 @@
 5. [Changelog](#15-changelog-decisões-técnicas-relevantes)
 6. [Documentação](#documentação)
 
+### 📚 Documentação Importante
+
+- **[AUDIT_REPORT.md](AUDIT_REPORT.md)** - Auditoria completa do projeto
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Arquitetura e sistema de configuração
+- **[docs/SECURITY_GUIDE.md](docs/SECURITY_GUIDE.md)** - Guia de segurança e dados sensíveis
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Troubleshooting e debug
+- **[QUICKSTART.md](QUICKSTART.md)** - Guia rápido para começar
+- **[TUTORIAL.md](TUTORIAL.md)** - Tutorial completo
+
 ---
 
 ## Overview

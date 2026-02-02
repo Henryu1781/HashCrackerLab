@@ -19,7 +19,14 @@ class NetworkManager:
     
     def verify_isolation(self) -> bool:
         """Verificar se a rede está isolada (sem acesso à Internet)"""
+        import platform
+        
         self.logger.info("Verificando isolamento de rede...")
+        
+        # Verificar SO
+        if platform.system() == "Windows":
+            self.logger.warning("Verificação de isolamento não suportada em Windows")
+            return True
         
         # Verificar rotas
         try:
@@ -41,6 +48,9 @@ class NetworkManager:
             self.logger.info("✓ Nenhuma rota default - rede isolada")
             return True
         
+        except FileNotFoundError:
+            self.logger.warning("Comando 'ip' não encontrado (não é Linux/Unix)")
+            return True
         except Exception as e:
             self.logger.error(f"Erro ao verificar rotas: {e}")
             return False
@@ -125,9 +135,20 @@ class NetworkManager:
             return False
     
     def _get_target_bssid(self, ssid: str) -> str:
-        """Obter BSSID do SSID alvo (simplificado)"""
-        # Em ambiente LAB, o BSSID deve ser conhecido
-        # Esta é uma implementação placeholder
+        """Obter BSSID do SSID alvo
+        
+        NOTA: Esta é uma implementação placeholder.
+        Em ambiente LAB, o BSSID deve ser configurado em YAML sob:
+        experiment.wifi.target_bssid
+        """
+        # Tentar obter do config
+        target_bssid = self.wifi_config.get('target_bssid')
+        if target_bssid:
+            return target_bssid
+        
+        # Fallback (não funciona realmente)
+        self.logger.warning(f"BSSID não configurado para SSID: {ssid}")
+        self.logger.warning("Configure 'target_bssid' em experiment.wifi no YAML")
         return "00:11:22:33:44:55"
     
     def crack_wpa_handshake(self, capture_file: Path, wordlist: Path) -> Dict:

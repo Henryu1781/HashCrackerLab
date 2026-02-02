@@ -116,7 +116,8 @@ class CrackingManager:
                                 mode_config: Dict, output_dir: Path) -> Dict:
         """Executar um modo de cracking específico"""
         mode_type = mode_config['type']
-        potfile = output_dir / f"cracked_{mode_type}.pot"
+        # Usar potfile único por algoritmo E modo
+        potfile = output_dir / f"cracked_{algo}_{mode_type}.pot"
         
         start_time = time.time()
         

@@ -104,7 +104,7 @@ class MetricsCollector:
         print(f"Taxa de sucesso: {metrics['success_rate']:.2%}\n")
         
         # Tabela por algoritmo
-        if metrics['by_algorithm']:
+        if metrics.get('by_algorithm'):
             print("Por Algoritmo:")
             table_data = []
             for algo, data in metrics['by_algorithm'].items():
@@ -123,7 +123,7 @@ class MetricsCollector:
             print()
         
         # Tabela por modo
-        if metrics['by_mode']:
+        if metrics.get('by_mode'):
             print("Por Modo de Ataque:")
             table_data = []
             for mode, data in metrics['by_mode'].items():
@@ -139,4 +139,7 @@ class MetricsCollector:
                 headers=['Modo', 'Execuções', 'Média Crackeados', 'Tempo Médio'],
                 tablefmt='grid'
             ))
+            print()
+        else:
+            print("Nenhum modo de ataque executado.")
             print()

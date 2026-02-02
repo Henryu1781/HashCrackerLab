@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from src.hash_generator import HashGenerator
 import logging
+from src.logger import setup_logger
 
 init(autoreset=True)
 
@@ -40,11 +41,11 @@ def simple_test():
     }
     
     # Setup logging
-    logger = logging.getLogger('SimpleTest')
-    logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
-    logger.addHandler(handler)
+    logger = setup_logger(
+        'SimpleTest',
+        log_file=output_dir / 'simple_test.log',
+        console_level=logging.INFO
+    )
     
     # Criar output dir
     output_dir = Path('results') / f'simple_test_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
