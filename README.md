@@ -1,5 +1,9 @@
 # Projeto Final - Hash Cracker
 
+![License](https://img.shields.io/github/license/Henryu1781/HashCrackerLab)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+![Last Commit](https://img.shields.io/github/last-commit/Henryu1781/HashCrackerLab)
+
 ## Autoria
 **Henrique Carvalho (2024047)** | **Gonçalo Ferro (2024091)**  
 **Duarte Vilar (2024187)** | **Francisco Silva (2024095)**
@@ -18,6 +22,18 @@
 3. [Resultados Obtidos](#13-resultados-obtidos)
 4. [Manual de Instalação e Utilização](#14-manual-de-instalação-e-utilização-resumo)
 5. [Changelog](#15-changelog-decisões-técnicas-relevantes)
+
+---
+
+## Overview
+
+O Hash Cracker Lab é um ambiente educacional para estudar segurança de passwords em LAB isolado.
+Inclui geração controlada de hashes, cracking automatizado, métricas e limpeza segura.
+
+### Screenshots
+
+- Adicione capturas em `docs/assets/` (ex.: `docs/assets/report.png`).
+- Referencie-as aqui para demonstrar o relatório e as métricas.
 
 ---
 
