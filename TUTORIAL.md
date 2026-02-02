@@ -143,36 +143,38 @@ python tools/validate_environment.py
 
 ## 🌐 Configuração da Rede LAB
 
-### Passo 1: Configurar VMs em Rede Interna (VirtualBox/VMware)
+### Passo 1: Configurar Rede LAB (Router)
 
-**VirtualBox:**
-1. Settings → Network → Adapter 1
-2. Attached to: **Internal Network**
-3. Name: `hashcracker_lab`
-
-**VMware:**
-1. VM Settings → Network Adapter
-2. **Custom: Specific virtual network**
-3. Criar rede `VMnet10` (Host-only)
+- Ligar todos os 4 PCs ao **router LAB** (WAN desligada).
+- SSID recomendado: `LAB-SERVERS`.
+- Não configurar gateway/DNS.
 
 ### Passo 2: Atribuir IPs Estáticos
 
-**VM1 (Arch - Orchestrator):**
+**PC1 (Arch - Orquestrador + GPU):**
 ```bash
 sudo ip addr add 192.168.100.10/24 dev enp0s3
 sudo ip link set enp0s3 up
 ```
 
-**VM2 (Kali - Monitorização + CPU):**
+**PC2 (Kali - Monitorização + CPU + Antena):**
 ```bash
 sudo ip addr add 192.168.100.20/24 dev eth0
 sudo ip link set eth0 up
 ```
 
-**VM3 (Windows + VM Kali - Comunicação):**
+**PC3 (Windows - Comunicação + VM Kali):**
 ```powershell
 # Painel de Controle > Rede > Propriedades IPv4
 IP: 192.168.100.30
+Máscara: 255.255.255.0
+Gateway: (deixar vazio)
+```
+
+**PC4 (Windows - Comunicação + VM Kali):**
+```powershell
+# Painel de Controle > Rede > Propriedades IPv4
+IP: 192.168.100.40
 Máscara: 255.255.255.0
 Gateway: (deixar vazio)
 ```

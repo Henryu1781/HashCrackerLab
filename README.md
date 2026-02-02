@@ -22,6 +22,7 @@
 3. [Resultados Obtidos](#13-resultados-obtidos)
 4. [Manual de Instalação e Utilização](#14-manual-de-instalação-e-utilização-resumo)
 5. [Changelog](#15-changelog-decisões-técnicas-relevantes)
+6. [Documentação](#documentação)
 
 ---
 
@@ -280,3 +281,13 @@ pytest
 ---
 
 **Data de conclusão:** Fevereiro 2026
+
+## Documentação
+
+- [docs/README.md](docs/README.md)
+- [docs/LAB_SETUP_4PCS.md](docs/LAB_SETUP_4PCS.md)
+- [docs/EXECUTION_GUIDE.md](docs/EXECUTION_GUIDE.md)
+- [docs/CHECKLIST.md](docs/CHECKLIST.md)
+- [docs/NETWORK_DIAGRAM.md](docs/NETWORK_DIAGRAM.md)
+- [docs/FAQ.md](docs/FAQ.md)
+- [docs/SECURITY.md](docs/SECURITY.md)

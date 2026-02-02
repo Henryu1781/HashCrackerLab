@@ -31,6 +31,15 @@ Todos os componentes do Hash Cracker Lab estão implementados e funcionais.
 - ✅ `tools/setup_test_ap.sh` - Setup de AP de teste
 - ✅ `tools/capture_handshake.sh` - Captura de handshakes
 
+### Documentação (100%)
+- ✅ `docs/README.md` - Índice da documentação
+- ✅ `docs/LAB_SETUP_4PCS.md` - Setup com 4 PCs
+- ✅ `docs/EXECUTION_GUIDE.md` - Guia de execução
+- ✅ `docs/CHECKLIST.md` - Checklist rápido
+- ✅ `docs/NETWORK_DIAGRAM.md` - Diagrama de rede
+- ✅ `docs/FAQ.md` - FAQ
+- ✅ `docs/SECURITY.md` - Segurança e ética
+
 ### Setup & Instalação (100%)
 - ✅ `setup_arch.sh` - Setup para Arch Linux
 - ✅ `setup_kali.sh` - Setup para Kali Linux  
