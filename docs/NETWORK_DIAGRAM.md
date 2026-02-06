@@ -12,6 +12,13 @@
                         192.168.100.20
 ```
 
+## Endereçamento (referência rápida)
+
+- PC1 (Arch / Orquestrador): `192.168.100.10`
+- PC2 (Kali / Monitorização): `192.168.100.20`
+- PC3 (Windows / Comunicação): `192.168.100.30`
+- PC4 (Windows / Comunicação): `192.168.100.40`
+
 ## Notas
 
 - Sem gateway/DNS em todas as máquinas.

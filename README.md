@@ -8,6 +8,12 @@
 
 Este projeto utiliza ferramentas de segurança (Hashcat, Aircrack-ng) que são frequentemente detetadas como **falsos positivos** por antivírus.
 
+## ⚖️ Uso Autorizado (LAB)
+
+- Uso **exclusivo** em ambiente LAB **isolado** e **autorizado**.
+- Não utilizar contra redes/sistemas reais, nem com dados reais.
+- Use apenas palavras‑passe sintéticas e redes de teste controladas.
+
 **Antes da instalação no Windows:**
 1. Execute `Set-ExecutionPolicy -Scope Process Bypass` no PowerShell (Admin).
 2. Execute o script de exclusões: `.\add_exclusions.ps1` (Admin).
@@ -23,7 +29,7 @@ Este projeto utiliza ferramentas de segurança (Hashcat, Aircrack-ng) que são f
 
 ## Índice
 
-1. [Instalação Rápida](#-instalação-rápida)
+1. [Instalação Rápida](#instalação-rápida)
 2. [Implementação da Solução](#11-implementação-da-solução)
    - [Componentes Implementados](#componentes-implementados)
 3. [Testes Realizados](#12-testes-realizados)
@@ -34,9 +40,9 @@ Este projeto utiliza ferramentas de segurança (Hashcat, Aircrack-ng) que são f
 4. [Resultados Obtidos](#13-resultados-obtidos)
 5. [Manual de Instalação e Utilização](#14-manual-de-instalação-e-utilização-resumo)
 6. [Changelog](#15-changelog-decisões-técnicas-relevantes)
-7. [Documentação](#-documentação-importante)
+7. [Documentação](#documentação-importante)
 
-### 📚 Documentação Importante
+## 📚 Documentação Importante
 
 - **[QUICKSTART.md](QUICKSTART.md)** - 🚀 Guia rápido para começar (Ler Primeiro!)
 - **[TUTORIAL.md](TUTORIAL.md)** - 📖 Tutorial passo-a-passo detalhado
@@ -50,6 +56,12 @@ Este projeto utiliza ferramentas de segurança (Hashcat, Aircrack-ng) que são f
 ## 🚀 Instalação Rápida
 
 Consulte o [QUICKSTART.md](QUICKSTART.md) para instruções detalhadas.
+
+### Pré-requisitos (todos os sistemas)
+
+1. Rede LAB isolada (sem Internet) quando fizer testes de rede.
+2. Python e dependências instaladas via scripts de setup.
+3. Validação a verde com `python tools/validate_environment.py`.
 
 ### Windows (PowerShell Admin)
 ```powershell

@@ -78,7 +78,7 @@ O ficheiro está sendo escrito enquanto tenta calcular seu checksum → checksum
 
 ### 5. Potfiles Sobreescritos em `src/cracking_manager.py` (Linha 138)
 
-**Status:** 🔴 PENDENTE - Requer mudança maior
+**Status:** ✅ CORRIGIDO
 
 **Problema:**
 ```python
@@ -87,7 +87,7 @@ potfile = output_dir / f"cracked_{mode_type}.pot"
 
 Cada modo usa a mesma `potfile`. Se executar múltiplos modos, sobreescrevem resultados um do outro.
 
-**Recomendação:**
+**Solução Aplicada:**
 ```python
 potfile = output_dir / f"cracked_{algo}_{mode_type}.pot"
 ```

@@ -46,7 +46,7 @@ O ficheiro `.passwords` é criado apenas para validação:
 rm -f results/*/hashes/.passwords
 
 # Ou usar cleanup automático:
-python cleanup.sh
+bash cleanup.sh
 ```
 
 ### 3. **Nunca Commitir Passwords em Git**

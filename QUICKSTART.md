@@ -1,6 +1,16 @@
 # Hash Cracker Lab - Quick Start 🚀
 
-## Instalação Rápida
+## ⚖️ Uso Autorizado (LAB)
+
+Este projeto é **educacional** e deve ser usado **apenas** em ambiente LAB **isolado** e **autorizado**.
+
+## Instalação Rápida (passo-a-passo)
+
+### 0) Pré-requisitos (todas as máquinas)
+
+1. Ter o repositório clonado.
+2. Garantir que a rede de testes está isolada quando fizer testes de rede.
+3. Ter permissões para instalar dependências (sudo no Linux / PowerShell Admin no Windows).
 
 ### Arch Linux (Henrique)
 ```bash
@@ -20,13 +30,14 @@ python tools/validate_environment.py
 
 ### Windows + VM Kali (Duarte + Francisco - Comunicação)
 ```powershell
-# 1. Configurar Exclusões Antivírus (IMPORTANTE!)
+# 1) Configurar exclusões do Windows Defender (IMPORTANTE!)
+#   - Executar PowerShell como Administrador
 .\add_exclusions.ps1
 
-# 2. Executar Setup (Instala Python, Git, Hashcat, Aircrack, Wireshark)
+# 2) Executar setup (instala Python, Git e ferramentas de LAB)
 .\setup_windows.ps1
 
-# 3. Fechar e reabrir PowerShell, depois:
+# 3) Fechar e reabrir o PowerShell (normal, não Admin), depois:
 .\venv\Scripts\Activate.ps1
 python tools/validate_environment.py
 ```
@@ -55,6 +66,8 @@ cat REPORT.md
 
 ## Testes LAB (WiFi + Tráfego)
 
+Estas secções assumem um **LAB isolado** e **autorizado**.
+
 ### Captura de Handshake (Kali)
 ```bash
 sudo tools/capture_handshake.sh -s "LAB-SERVERS" -i wlan0 -t 60 -d 10
@@ -79,6 +92,12 @@ pytest
 ## Reprodutibilidade
 
 Em configs YAML, defina `seed` e `deterministic_salts: true` para resultados determinísticos.
+
+## Validação rápida (se algo falhar)
+
+1. Re-executar: `python tools/validate_environment.py`
+2. Windows: confirmar exclusões do Defender e reabrir PowerShell.
+3. Linux: confirmar `source venv/bin/activate` antes de correr scripts.
 
 ## Estrutura do Projeto
 

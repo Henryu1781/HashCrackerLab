@@ -90,7 +90,7 @@ Todos os componentes do Hash Cracker Lab estão implementados e funcionais.
 - ✅ Captura de handshakes WPA/WPA2:
   - ✅ Modo monitor (airmon-ng)
   - ✅ Captura (airodump-ng)
-  - ✅ Deauth attacks (aireplay-ng)
+  - ✅ Testes controlados de desassociação em LAB (aireplay-ng)
   - ✅ Cracking com aircrack-ng
 
 ### 4. Métricas & Relatórios ✅

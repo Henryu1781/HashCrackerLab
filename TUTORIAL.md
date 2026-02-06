@@ -1,5 +1,10 @@
 # Hash Cracker Lab - Tutorial Completo
 
+## ⚖️ Uso Autorizado (LAB)
+
+Este projeto é **educacional** e deve ser usado **apenas** em ambiente LAB **isolado** e **autorizado**.
+Não utilize contra redes/sistemas reais, nem com dados reais.
+
 ## 📋 Índice
 
 1. [Visão Geral](#visão-geral)
@@ -122,19 +127,22 @@ cd HashCrackerLab
 # 2. Executar PowerShell como Administrador
 # Botão direito > "Executar como Administrador"
 
-# 3. Executar instalação
+# 3. (Recomendado) Configurar exclusões do Windows Defender (Admin)
+.\add_exclusions.ps1
+
+# 4. Executar instalação
 Set-ExecutionPolicy Bypass -Scope Process
 .\setup_windows.ps1
 
-# 4. Fechar e reabrir PowerShell (normal, não admin)
+# 5. Fechar e reabrir PowerShell (normal, não admin)
 
-# 5. Ativar ambiente Python
+# 6. Ativar ambiente Python
 .\venv\Scripts\Activate.ps1
 
-# 6. Validar instalação
+# 7. Validar instalação
 python tools/validate_environment.py
 
-# 7. Configurar isolamento de rede
+# 8. Configurar isolamento de rede
 # Painel de Controle > Rede > Propriedades do Adaptador
 # Desativar IPv4 Gateway ou desconectar da Internet
 ```
@@ -454,11 +462,11 @@ pip install -r requirements.txt
 # Verificar caminho
 ls -lh wordlists/
 
-# Rockyou no Kali
-gunzip -c /usr/share/wordlists/rockyou.txt.gz > wordlists/rockyou.txt
+# Recomendado: usar a wordlist de teste já incluída no repositório
+ls -lh wordlists/rockyou-small.txt
 
-# Criar pequena para testes
-head -n 1000 wordlists/rockyou.txt > wordlists/rockyou-small.txt
+# Alternativa (LAB): gerar uma wordlist sintética
+python tools/wordlist_generator.py pattern -o wordlists/test.txt -p "test{}" -n 200
 ```
 
 ### Rede LAB não comunica

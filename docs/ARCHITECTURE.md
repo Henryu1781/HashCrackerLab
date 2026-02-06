@@ -1,5 +1,11 @@
 # 🏗️ Arquitetura e Configuração - Hash Cracker Lab
 
+## Como usar este documento
+
+1. Se quer apenas executar o LAB: comece por `QUICKSTART.md` e `docs/EXECUTION_GUIDE.md`.
+2. Se quer entender o código/config: veja as secções **Sistema de Configuração** e **Fluxo de Dados**.
+3. Se está a mexer em dados sensíveis: leia `docs/SECURITY_GUIDE.md`.
+
 ## Estrutura de Módulos
 
 ```

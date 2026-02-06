@@ -2,6 +2,10 @@
 
 Este guia descreve a montagem e execução do LAB com 4 portáteis, 1 router e 1 antena WiFi.
 
+## ⚖️ Uso autorizado
+
+Montagem e testes apenas em ambiente isolado e autorizado.
+
 ## Roles e Máquinas
 
 - **PC1 (Arch)**: Orquestrador + GPU Tester
@@ -15,6 +19,11 @@ Este guia descreve a montagem e execução do LAB com 4 portáteis, 1 router e 1
 - SSID do LAB (ex.: `LAB-SERVERS`).
 - Sub-rede: `192.168.100.0/24`.
 - Gateway e DNS **vazios** em todas as máquinas.
+
+### Verificação rápida de isolamento
+
+- Linux: `ip route` não deve ter `default via ...`
+- Windows: `route print | findstr 0.0.0.0`
 
 ### IPs Estáticos
 
@@ -47,6 +56,7 @@ python tools/validate_environment.py
 
 ```powershell
 # PowerShell como Administrador
+.\add_exclusions.ps1
 .\setup_windows.ps1
 
 # Depois, normal

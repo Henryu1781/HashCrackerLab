@@ -4,6 +4,20 @@
 **Projeto:** Hash Cracker Lab  
 **Status:** ✅ **COMPLETO**
 
+## Como ler este documento
+
+- Para um guia de execução (passo-a-passo): `QUICKSTART.md` e `docs/EXECUTION_GUIDE.md`
+- Para entender arquitetura/configuração: `docs/ARCHITECTURE.md`
+- Para segurança/limpeza: `docs/SECURITY_GUIDE.md`
+- Para detalhes de auditoria (linha por linha): `AUDIT_REPORT.md`
+
+## Próximos passos (recomendado)
+
+1. Executar validação em cada máquina: `python tools/validate_environment.py`
+2. Correr o teste rápido no orquestrador: `python orchestrator.py --config config/quick_test.yaml`
+3. Rever relatório e métricas em `results/*/`
+4. Executar limpeza conforme política do LAB: `bash cleanup.sh`
+
 ---
 
 ## 📊 Estatísticas

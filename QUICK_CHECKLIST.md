@@ -92,7 +92,7 @@ python simple_test.py
 # 3. Executar
 python orchestrator.py --config config/quick_test.yaml --dry-run
 
-# 4. Com dados reais
+# 4. Execução completa (LAB)
 python orchestrator.py --config config/quick_test.yaml
 
 # 5. Limpar

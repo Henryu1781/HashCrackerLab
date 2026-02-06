@@ -1,5 +1,11 @@
 # ✅ Correções de Design - Resumo Final
 
+## Como usar este documento
+
+- Este ficheiro explica *porquê* e *como* foram feitas melhorias de design.
+- Para executar o LAB: comece por `QUICKSTART.md` e `docs/EXECUTION_GUIDE.md`.
+- Para segurança/limpeza: leia `docs/SECURITY_GUIDE.md`.
+
 ## Problemas de Design Identificados e Corrigidos
 
 ---

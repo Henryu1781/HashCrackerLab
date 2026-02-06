@@ -2,6 +2,10 @@
 
 ## Problemas Comuns e Soluções
 
+## ⚖️ Nota de segurança (LAB)
+
+Este guia assume uso educacional em LAB isolado e autorizado. Evite dependências de Internet durante experiências e **não** utilize datasets/leaks reais.
+
 ---
 
 ## ❌ Erro: `Configuração carregada: ModuleNotFoundError`
@@ -82,12 +86,17 @@ brew install hashcat
 ```
 
 ### Windows
-Descarregar de: https://hashcat.net/hashcat/
+Se o setup do projeto não instalou corretamente, instale e/ou valide:
 
-Depois:
 ```powershell
-# Adicionar ao PATH
-$env:Path += ";C:\hashcat"
+# (1) Confirmar exclusões do Windows Defender (muitos falsos positivos)
+.\add_exclusions.ps1
+
+# (2) Re-executar setup
+.\setup_windows.ps1
+
+# (3) Validar
+python tools/validate_environment.py
 ```
 
 ---
@@ -138,29 +147,16 @@ sudo ip link set eth0 down
 
 **Solução:**
 
-### Opção 1: Usar wordlist mínima
+### Opção 1: Usar wordlist mínima (recomendado)
 ```bash
 python tools/wordlist_generator.py pattern -o wordlists/test.txt -p "test{}" -n 100
 ```
 
-### Opção 2: Descarregar rockyou
-```bash
-cd wordlists/
+### Opção 2: Usar a wordlist de teste já incluída
 
-# Se não tiver wget, usar curl
-curl -L https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt \
-  -o rockyou.txt
+O repositório já inclui `wordlists/rockyou-small.txt` para testes de LAB.
 
-# Ou direto do script
-python -c "
-import urllib.request
-url = 'https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt'
-urllib.request.urlretrieve(url, 'rockyou.txt')
-print('✓ rockyou.txt descarregado')
-"
-```
-
-### Opção 3: Gerar custom
+### Opção 3: Gerar wordlist custom (sintética)
 ```bash
 python tools/wordlist_generator.py pattern \
   -o wordlists/custom.txt \
