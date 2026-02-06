@@ -7,7 +7,7 @@ Write-Host "Role: Shared Tester" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Verificar se é Admin
+# Verificar se e Admin
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
     Write-Host "[ERRO] Execute este script como Administrador!" -ForegroundColor Red
@@ -16,14 +16,14 @@ if (-not $isAdmin) {
     exit 1
 }
 
-# Verificar se Chocolatey está instalado
+# Verificar se Chocolatey esta instalado
 if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
     Write-Host "[1/9] Instalando Chocolatey..." -ForegroundColor Yellow
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 } else {
-    Write-Host "[1/9] Chocolatey já instalado ✓" -ForegroundColor Green
+    Write-Host "[1/9] Chocolatey ja instalado" -ForegroundColor Green
 }
 
 Write-Host "[2/9] Instalando Python..." -ForegroundColor Yellow
@@ -60,7 +60,38 @@ if (Test-Path "C:\hashcat") {
 }
 
 Write-Host "[5/9] Instalando Aircrack-ng..." -ForegroundColor Yellow
-choco install aircrack-ng -y
+$aircrackInstalled = $false
+try {
+    choco install aircrack-ng -y
+    if (Get-Command "aircrack-ng" -ErrorAction SilentlyContinue) {
+        $aircrackInstalled = $true
+    }
+} catch {
+    $aircrackInstalled = $false
+}
+
+if (-not $aircrackInstalled) {
+    Write-Host "Tentando instalar Aircrack-ng manualmente via ZIP..." -ForegroundColor Yellow
+    $aircrackUrl = "https://download.aircrack-ng.org/aircrack-ng-1.7-win.zip"
+    $aircrackZip = "$env:TEMP\aircrack-ng.zip"
+    try {
+        Invoke-WebRequest -Uri $aircrackUrl -OutFile $aircrackZip -ErrorAction Stop
+        if (-not (Test-Path "C:\Program Files\7-Zip\7z.exe")) {
+            choco install 7zip -y
+        }
+        & "C:\Program Files\7-Zip\7z.exe" x $aircrackZip -o"C:\aircrack-ng" -y 2>$null
+        
+        # Mover binarios para a raiz se estiverem numa subpasta (comum no zip)
+        if (Test-Path "C:\aircrack-ng\aircrack-ng-1.7-win\bin") {
+             $aircrackBin = "C:\aircrack-ng\aircrack-ng-1.7-win\bin"
+             $env:Path += ";$aircrackBin"
+             [Environment]::SetEnvironmentVariable("Path", $env:Path, [EnvironmentVariableTarget]::Machine)
+             Write-Host "Aircrack-ng instalado manualmente em $aircrackBin" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "Aviso: Falha ao descarregar/instalar Aircrack-ng manualmente." -ForegroundColor Yellow
+    }
+}
 
 Write-Host "[6/9] Instalando Wireshark (inclui tshark)..." -ForegroundColor Yellow
 choco install wireshark -y
@@ -82,10 +113,10 @@ try {
 try {
     pip install -r requirements.txt
 } catch {
-    Write-Host "Aviso: Falha ao instalar dependências Python." -ForegroundColor Yellow
+    Write-Host "Aviso: Falha ao instalar dependencias Python." -ForegroundColor Yellow
 }
 
-Write-Host "[8/9] Criando estrutura de diretórios..." -ForegroundColor Yellow
+Write-Host "[8/9] Criando estrutura de diretorios..." -ForegroundColor Yellow
 $dirs = @("wordlists", "rules", "captures", "results", "logs", "hashes", "temp")
 foreach ($dir in $dirs) {
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
@@ -108,7 +139,7 @@ if (Test-Path "wordlists\rockyou.txt") {
         Write-Host "Aviso: Falha ao criar wordlist pequena." -ForegroundColor Yellow
     }
 } else {
-    Write-Host "Aviso: rockyou.txt não encontrado." -ForegroundColor Yellow
+    Write-Host "Aviso: rockyou.txt nao encontrado." -ForegroundColor Yellow
 }
 
 Write-Host ''
