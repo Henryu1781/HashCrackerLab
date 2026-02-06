@@ -4,6 +4,17 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Last Commit](https://img.shields.io/github/last-commit/Henryu1781/HashCrackerLab)
 
+## ⚠️ Aviso Importante (Windows)
+
+Este projeto utiliza ferramentas de segurança (Hashcat, Aircrack-ng) que são frequentemente detetadas como **falsos positivos** por antivírus.
+
+**Antes da instalação no Windows:**
+1. Execute `Set-ExecutionPolicy -Scope Process Bypass` no PowerShell (Admin).
+2. Execute o script de exclusões: `.\add_exclusions.ps1` (Admin).
+3. Ou adicione exclusões manuais para `C:\hashcat`, `C:\tools` e a pasta do projeto.
+
+---
+
 ## Autoria
 **Henrique Carvalho (2024047)** | **Gonçalo Ferro (2024091)**  
 **Duarte Vilar (2024187)** | **Francisco Silva (2024095)**
@@ -12,26 +23,54 @@
 
 ## Índice
 
-1. [Implementação da Solução](#11-implementação-da-solução)
+1. [Instalação Rápida](#-instalação-rápida)
+2. [Implementação da Solução](#11-implementação-da-solução)
    - [Componentes Implementados](#componentes-implementados)
-2. [Testes Realizados](#12-testes-realizados)
+3. [Testes Realizados](#12-testes-realizados)
    - [Testes Unitários](#121-testes-unitários)
    - [Testes de Integração](#122-testes-de-integração)
    - [Testes de Aceitação (UAT)](#123-testes-de-aceitação-uat)
    - [Testes de Segurança e Limpeza](#124-testes-de-segurança-e-limpeza)
-3. [Resultados Obtidos](#13-resultados-obtidos)
-4. [Manual de Instalação e Utilização](#14-manual-de-instalação-e-utilização-resumo)
-5. [Changelog](#15-changelog-decisões-técnicas-relevantes)
-6. [Documentação](#documentação)
+4. [Resultados Obtidos](#13-resultados-obtidos)
+5. [Manual de Instalação e Utilização](#14-manual-de-instalação-e-utilização-resumo)
+6. [Changelog](#15-changelog-decisões-técnicas-relevantes)
+7. [Documentação](#-documentação-importante)
 
 ### 📚 Documentação Importante
 
+- **[QUICKSTART.md](QUICKSTART.md)** - 🚀 Guia rápido para começar (Ler Primeiro!)
+- **[TUTORIAL.md](TUTORIAL.md)** - 📖 Tutorial passo-a-passo detalhado
 - **[AUDIT_REPORT.md](AUDIT_REPORT.md)** - Auditoria completa do projeto
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - 🔧 Resolução de problemas comuns
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Arquitetura e sistema de configuração
 - **[docs/SECURITY_GUIDE.md](docs/SECURITY_GUIDE.md)** - Guia de segurança e dados sensíveis
-- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Troubleshooting e debug
-- **[QUICKSTART.md](QUICKSTART.md)** - Guia rápido para começar
-- **[TUTORIAL.md](TUTORIAL.md)** - Tutorial completo
+
+---
+
+## 🚀 Instalação Rápida
+
+Consulte o [QUICKSTART.md](QUICKSTART.md) para instruções detalhadas.
+
+### Windows (PowerShell Admin)
+```powershell
+# 1. Configurar Exclusões (Vital para Hashcat/Aircrack)
+.\add_exclusions.ps1
+
+# 2. Instalar Dependências e Ferramentas
+.\setup_windows.ps1
+
+# 3. Ativar e Validar
+.\venv\Scripts\Activate.ps1
+python tools/validate_environment.py
+```
+
+### Linux (Arch/Kali)
+```bash
+chmod +x setup_arch.sh setup_kali.sh
+./setup_arch.sh  # ou ./setup_kali.sh
+source venv/bin/activate
+python tools/validate_environment.py
+```
 
 ---
 

@@ -20,10 +20,13 @@ python tools/validate_environment.py
 
 ### Windows + VM Kali (Duarte + Francisco - Comunicação)
 ```powershell
-# Como Administrador
+# 1. Configurar Exclusões Antivírus (IMPORTANTE!)
+.\add_exclusions.ps1
+
+# 2. Executar Setup (Instala Python, Git, Hashcat, Aircrack, Wireshark)
 .\setup_windows.ps1
 
-# Depois, normal:
+# 3. Fechar e reabrir PowerShell, depois:
 .\venv\Scripts\Activate.ps1
 python tools/validate_environment.py
 ```
