@@ -252,7 +252,9 @@ sudo tools/capture_handshake.sh -s "LAB-SERVERS" -i wlan0 -t 60 -d 10
 aircrack-ng captures/handshake_LAB-SERVERS_*.cap
 ```
 
-### 4. Teste de Tráfego tipo Telnet (LAB)
+### 4. Geração de Tráfego tipo Telnet (LAB)
+
+Este passo cria tráfego de rede autêntico para ser capturado.
 
 **Servidor (ex.: Arch ou Windows #1):**
 
@@ -260,16 +262,40 @@ aircrack-ng captures/handshake_LAB-SERVERS_*.cap
 python tools/generate_telnet_traffic.py --server --host 0.0.0.0 --port 2323
 ```
 
-**Cliente (ex.: Windows #2):**
+**Cliente (ex.: Windows #2 - Aquele que envia a password):**
 
 ```bash
-python tools/generate_telnet_traffic.py --client --host 192.168.100.10 --port 2323 \
-  --user labuser --password labpass
+python tools/generate_telnet_traffic.py --client --host <IP_DO_SERVIDOR> --port 2323 \
+  --user admin --password sup3rs3cr3t
 ```
 
-> Use apenas em LAB isolado e com autorização.
+> **Nota:** Use apenas em LAB isolado e com autorização.
 
-### 3. Ver Resultados
+### 5. Captura de Credenciais Telnet (Kali + Wireshark)
+
+Uma vez que o Telnet transmite dados em texto claro (cleartext), é possível intercetar as credenciais se estiver na mesma rede (Wi-Fi ou com ARP Spoofing).
+
+**No Kali Linux (Monitorização):**
+
+1. **Abrir Wireshark:**
+   ```bash
+   sudo wireshark
+   ```
+2. **Selecionar Interface:** Escolha `wlan0` (se Wi-Fi) ou `eth0` (se cabo/VM).
+3. **Filtrar Tráfego:**
+   Na barra de topo, escreva:
+   ```
+   tcp.port == 2323
+   ```
+4. **Iniciar Captura:** Clique no ícone do tubarão azul.
+5. **Gerar Tráfego:** Execute o comando do **Cliente** (Passo 4) no Windows.
+6. **Analisar:**
+   - Pare a captura (botão vermelho).
+   - Clique com o botão direito num pacote (PSH/ACK).
+   - Selecione **Follow** > **TCP Stream**.
+   - A password aparecerá a vermelho/azul em texto limpo.
+
+### 6. Ver Resultados
 
 ```bash
 # Navegar até diretório de resultados
@@ -282,7 +308,7 @@ cat REPORT.md
 cat metrics/metrics.json
 ```
 
-### 4. Limpeza
+### 7. Limpeza
 
 ```bash
 # Limpar resultados
