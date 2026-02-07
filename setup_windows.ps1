@@ -97,7 +97,8 @@ Write-Host "[6/9] Instalando Wireshark (inclui tshark)..." -ForegroundColor Yell
 choco install wireshark -y
 
 Write-Host "[7/9] Configurando ambiente Python..." -ForegroundColor Yellow
-python -m venv venv
+# Usar --clear para garantir ambiente limpo
+python -m venv --clear venv
 try {
     & ".\venv\Scripts\Activate.ps1" -ErrorAction Stop
 } catch {

@@ -31,7 +31,8 @@ sudo apt install -y \
     build-essential
 
 echo -e "${YELLOW}[3/7] Configurando ambiente Python...${NC}"
-python3 -m venv venv || { echo "Erro ao criar venv"; exit 1; }
+# Usar --clear para limpar venv anterior se existir (evita erros de caminho)
+python3 -m venv --clear venv || { echo "Erro ao criar venv"; exit 1; }
 source venv/bin/activate || { echo "Erro ao ativar venv"; exit 1; }
 pip install --upgrade pip || echo "Aviso: Erro ao atualizar pip"
 pip install -r requirements.txt || { echo "Erro ao instalar dependências Python"; exit 1; }

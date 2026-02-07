@@ -20,6 +20,15 @@ if [[ $EUID -eq 0 ]]; then
    exit 1
 fi
 
+# Verificação prévia de erro comum (typo em mkinitcpio)
+if [ -f /etc/mkinitcpio.conf ]; then
+    if grep -q "nvida" /etc/mkinitcpio.conf 2>/dev/null; then
+        echo -e "${RED}ERRO DETECTADO:${NC} Typo 'nvida' encontrado em /etc/mkinitcpio.conf"
+        echo -e "${YELLOW}Tentando corrigir automaticamente para 'nvidia'...${NC}"
+        sudo sed -i 's/nvida/nvidia/g' /etc/mkinitcpio.conf || echo -e "${RED}Falha na correção automática${NC}"
+    fi
+fi
+
 echo -e "${YELLOW}[1/8] Atualizando sistema...${NC}"
 sudo pacman -Syu --noconfirm
 
@@ -40,7 +49,8 @@ echo -e "${YELLOW}[3/8] Verificando suporte GPU...${NC}"
 # NVIDIA
 if lspci | grep -i nvidia &> /dev/null; then
     echo "GPU NVIDIA detectada"
-    sudo pacman -S --needed --noconfirm nvidia nvidia-utils opencl-nvidia 2>/dev/null || \
+    # Removido 2>/dev/null para mostrar erros de instalação se ocorrerem
+    sudo pacman -S --needed --noconfirm nvidia nvidia-utils opencl-nvidia || \
         echo -e "${YELLOW}Aviso: Não foi possível instalar drivers NVIDIA. Continue manualmente se necessário.${NC}"
 fi
 
@@ -52,7 +62,8 @@ if lspci | grep -i amd.*vga &> /dev/null; then
 fi
 
 echo -e "${YELLOW}[4/8] Instalando dependências Python...${NC}"
-python -m venv venv || { echo "Erro ao criar venv"; exit 1; }
+# Usar --clear para garantir que o venv é recriado se estiver corrompido ou movido
+python -m venv --clear venv || { echo "Erro ao criar venv"; exit 1; }
 source venv/bin/activate || { echo "Erro ao ativar venv"; exit 1; }
 pip install --upgrade pip || echo "Aviso: Erro ao atualizar pip"
 pip install -r requirements.txt || { echo "Erro ao instalar dependências Python"; exit 1; }

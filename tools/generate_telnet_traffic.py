@@ -16,13 +16,37 @@ from datetime import datetime
 
 
 def handle_client(conn, addr):
+    attempts = 0
+    max_attempts = 3
+    
     with conn:
-        conn.sendall(b"login: ")
-        data = conn.recv(1024)
-        conn.sendall(b"password: ")
-        data2 = conn.recv(1024)
-        timestamp = datetime.now().isoformat()
-        print(f"[{timestamp}] {addr} -> {data.strip().decode(errors='ignore')} / {data2.strip().decode(errors='ignore')}")
+        print(f"Connection from {addr}")
+        while attempts < max_attempts:
+            try:
+                conn.sendall(b"login: ")
+                user_data = conn.recv(1024)
+                if not user_data: break
+                
+                conn.sendall(b"password: ")
+                pass_data = conn.recv(1024)
+                if not pass_data: break
+                
+                user = user_data.strip().decode(errors='ignore')
+                password = pass_data.strip().decode(errors='ignore')
+                timestamp = datetime.now().isoformat()
+                
+                print(f"[{timestamp}] {addr} [Attempt {attempts+1}/{max_attempts}] -> {user} / {password}")
+                
+                # Simular falha para gerar mais tráfego e testar bloqueio
+                attempts += 1
+                if attempts >= max_attempts:
+                    conn.sendall(b"\r\nAccount locked due to 3 failed attempts. Please try again in 15 minutes.\r\n")
+                    print(f"[{timestamp}] {addr} -> Account Locked (15m)")
+                else:
+                    conn.sendall(b"\r\nLogin incorrect\r\n")
+                    
+            except BrokenPipeError:
+                break
 
 
 def run_server(host: str, port: int):
@@ -39,11 +63,26 @@ def run_server(host: str, port: int):
 def run_client(host: str, port: int, user: str, password: str):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((host, port))
-        s.recv(1024)
-        s.sendall((user + "\n").encode())
-        s.recv(1024)
-        s.sendall((password + "\n").encode())
-        print("Credenciais enviadas")
+        
+        while True:
+            data = s.recv(1024)
+            if not data:
+                break
+            
+            msg = data.decode(errors='ignore')
+            # print(msg, end='') # Debug
+            
+            if "login:" in msg.lower():
+                s.sendall((user + "\n").encode())
+            elif "password:" in msg.lower():
+                s.sendall((password + "\n").encode())
+            elif "locked" in msg.lower():
+                print(f"\n[!] Conta bloqueada detetada! Mensagem do servidor: {msg.strip()}")
+                break
+            elif "incorrect" in msg.lower():
+                print(f"[-] Tentativa falhou com {user}:{password}")
+                # O loop continua e o servidor deve enviar 'login:' novamente em seguida
+
 
 
 def main():
