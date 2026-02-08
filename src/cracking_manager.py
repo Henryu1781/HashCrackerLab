@@ -4,6 +4,7 @@ Coordena execução de hashcat/john e distribuição de trabalho
 """
 
 import os
+import sys
 import subprocess
 import json
 import time
@@ -20,6 +21,60 @@ class CrackingManager:
         self.config = config
         self.logger = logger
         self.cracking_config = config['experiment']['cracking']
+        self._hashcat_cmd = None
+        self._hashcat_cwd = None
+
+    def _resolve_hashcat_command(self):
+        if self._hashcat_cmd is not None:
+            return
+
+        self._hashcat_cmd = 'hashcat'
+        self._hashcat_cwd = None
+
+        if sys.platform != "win32":
+            return
+
+        candidates = []
+        env_path = os.environ.get("HASHCAT_PATH")
+        if env_path:
+            env_path = Path(env_path)
+            if env_path.is_dir():
+                candidates.extend([
+                    env_path / "hashcat64.exe",
+                    env_path / "hashcat.exe",
+                ])
+            else:
+                candidates.append(env_path)
+
+        tools_root = os.environ.get("ChocolateyToolsLocation", r"C:\tools")
+        tools_root = Path(tools_root)
+        if tools_root.exists():
+            for p in tools_root.glob("hashcat*"):
+                if p.is_dir():
+                    candidates.extend([
+                        p / "hashcat64.exe",
+                        p / "hashcat.exe",
+                    ])
+
+        candidates.extend([
+            Path(r"C:\hashcat\hashcat.exe"),
+            Path(r"C:\hashcat\hashcat64.exe"),
+            Path(r"C:\tools\hashcat\hashcat.exe"),
+            Path(r"C:\tools\hashcat\hashcat64.exe"),
+        ])
+
+        for candidate in candidates:
+            if candidate.exists():
+                self._hashcat_cmd = str(candidate)
+                self._hashcat_cwd = str(candidate.parent)
+                break
+
+        if self._hashcat_cwd:
+            self.logger.info(f"Hashcat path resolvido: {self._hashcat_cmd}")
+
+    def _hashcat_command(self):
+        self._resolve_hashcat_command()
+        return self._hashcat_cmd, self._hashcat_cwd
     
     def run_cracking(self, hashes_file: Path, output_dir: Path) -> Dict:
         """Executar cracking de todos os hashes"""
@@ -81,6 +136,8 @@ class CrackingManager:
         hash_file = output_dir / "hashes.txt"
         self._prepare_hashcat_file(hashes, hash_file, algo)
         
+        hash_type = self._get_hashcat_type(algo, hashes)
+
         # Executar cada modo de cracking configurado
         for mode_config in self.cracking_config['modes']:
             mode_type = mode_config['type']
@@ -91,7 +148,8 @@ class CrackingManager:
                 algo,
                 hash_file,
                 mode_config,
-                output_dir
+                output_dir,
+                hash_type
             )
             
             results['executions'].append(exec_result)
@@ -113,7 +171,8 @@ class CrackingManager:
                     f.write(f"{hash_val}\n")
     
     def _execute_cracking_mode(self, algo: str, hash_file: Path, 
-                                mode_config: Dict, output_dir: Path) -> Dict:
+                                mode_config: Dict, output_dir: Path,
+                                hash_type: int) -> Dict:
         """Executar um modo de cracking específico"""
         mode_type = mode_config['type']
         # Usar potfile único por algoritmo E modo
@@ -132,11 +191,19 @@ class CrackingManager:
         try:
             if mode_type == 'dictionary':
                 result.update(self._run_dictionary_attack(
-                    algo, hash_file, mode_config, potfile
+                    algo, hash_file, mode_config, potfile, hash_type
                 ))
             elif mode_type == 'brute-force':
                 result.update(self._run_bruteforce_attack(
-                    algo, hash_file, mode_config, potfile
+                    algo, hash_file, mode_config, potfile, hash_type
+                ))
+            elif mode_type == 'combinator':
+                result.update(self._run_combinator_attack(
+                    algo, hash_file, mode_config, potfile, hash_type
+                ))
+            elif mode_type == 'hybrid':
+                result.update(self._run_hybrid_attack(
+                    algo, hash_file, mode_config, potfile, hash_type
                 ))
             else:
                 self.logger.warning(f"Modo não suportado: {mode_type}")
@@ -151,7 +218,8 @@ class CrackingManager:
         return result
     
     def _run_dictionary_attack(self, algo: str, hash_file: Path, 
-                                config: Dict, potfile: Path) -> Dict:
+                                config: Dict, potfile: Path,
+                                hash_type: int) -> Dict:
         """Executar ataque de dicionário"""
         wordlist = Path(config['wordlist'])
         rules = config.get('rules')
@@ -159,12 +227,14 @@ class CrackingManager:
         if not wordlist.exists():
             raise FileNotFoundError(f"Wordlist não encontrada: {wordlist}")
         
-        # Determinar hash-type para hashcat
-        hash_type = self._get_hashcat_type(algo)
+        hash_file = hash_file.resolve()
+        wordlist = wordlist.resolve()
+        potfile = potfile.resolve()
         
         # Construir comando hashcat
+        hashcat_cmd, hashcat_cwd = self._hashcat_command()
         cmd = [
-            'hashcat',
+            hashcat_cmd,
             '-m', str(hash_type),
             '-a', '0',  # Dictionary attack
             '--potfile-path', str(potfile),
@@ -185,7 +255,8 @@ class CrackingManager:
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=config.get('max_time', 600)
+                timeout=config.get('max_time', 600),
+                cwd=hashcat_cwd
             )
             
             # Contar crackeados
@@ -208,15 +279,18 @@ class CrackingManager:
             }
     
     def _run_bruteforce_attack(self, algo: str, hash_file: Path,
-                                config: Dict, potfile: Path) -> Dict:
+                                config: Dict, potfile: Path,
+                                hash_type: int) -> Dict:
         """Executar ataque brute-force"""
         mask = config.get('mask', '?l?l?l?l')
         max_time = config.get('max_time', 300)
         
-        hash_type = self._get_hashcat_type(algo)
-        
+        hashcat_cmd, hashcat_cwd = self._hashcat_command()
+        hash_file = hash_file.resolve()
+        potfile = potfile.resolve()
+
         cmd = [
-            'hashcat',
+            hashcat_cmd,
             '-m', str(hash_type),
             '-a', '3',  # Brute-force
             '--potfile-path', str(potfile),
@@ -233,7 +307,8 @@ class CrackingManager:
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=max_time
+                timeout=max_time,
+                cwd=hashcat_cwd
             )
             
             return {
@@ -250,9 +325,68 @@ class CrackingManager:
                 'timeout': True,
                 'mask': mask
             }
+            
+    def _run_combinator_attack(self, algo: str, hash_file: Path,
+                               config: Dict, potfile: Path,
+                               hash_type: int) -> Dict:
+        """Executar ataque Combinator (-a 1)"""
+        max_time = config.get('max_time', 300)
+        hashcat_cmd, hashcat_cwd = self._hashcat_command()
+        hash_file = hash_file.resolve()
+        potfile = potfile.resolve()
+        
+        # Combinator requer 2 wordlists ou 2x a mesma
+        wl_left = Path(config.get('wordlist_left', config.get('wordlist')))
+        wl_right = Path(config.get('wordlist_right', config.get('wordlist')))
+
+        cmd = [
+            hashcat_cmd, '-m', str(hash_type), '-a', '1',
+            '--potfile-path', str(potfile), '--quiet', '--force',
+            str(hash_file), str(wl_left), str(wl_right)
+        ]
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=max_time, cwd=hashcat_cwd)
+            return {'command': ' '.join(cmd), 'cracked': self._count_cracked(potfile), 'returncode': result.returncode}
+        except subprocess.TimeoutExpired:
+            return {'command': ' '.join(cmd), 'cracked': self._count_cracked(potfile), 'timeout': True}
+
+    def _run_hybrid_attack(self, algo: str, hash_file: Path,
+                           config: Dict, potfile: Path,
+                           hash_type: int) -> Dict:
+        """Executar ataque Híbrido (-a 6 ou -a 7)"""
+        max_time = config.get('max_time', 300)
+        hashcat_cmd, hashcat_cwd = self._hashcat_command()
+        hash_file = hash_file.resolve()
+        potfile = potfile.resolve()
+        
+        mode = '6'  # Wordlist + Mask (default)
+        if config.get('reverse', False):
+            mode = '7'  # Mask + Wordlist
+
+        wordlist = Path(config.get('wordlist')).resolve()
+        mask = config.get('mask', '?d?d?d?d')
+        
+        # Ordem dos args: hash wordlist mask OU hash mask wordlist
+        args = [str(hash_file), str(wordlist), mask] if mode == '6' else [str(hash_file), mask, str(wordlist)]
+
+        cmd = [
+            hashcat_cmd, '-m', str(hash_type), '-a', mode,
+            '--potfile-path', str(potfile), '--quiet', '--force'
+        ] + args
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=max_time, cwd=hashcat_cwd)
+            return {'command': ' '.join(cmd), 'cracked': self._count_cracked(potfile), 'returncode': result.returncode}
+        except subprocess.TimeoutExpired:
+            return {'command': ' '.join(cmd), 'cracked': self._count_cracked(potfile), 'timeout': True}
     
-    def _get_hashcat_type(self, algo: str) -> int:
+    def _get_hashcat_type(self, algo: str, hashes: List[Dict] = None) -> int:
         """Mapear algoritmo para hash-type do hashcat"""
+        if algo == 'sha256' and hashes:
+            if any(h.get('salt') for h in hashes):
+                return 1420  # sha256($salt.$pass)
+
         mapping = {
             'md5': 0,
             'sha1': 100,

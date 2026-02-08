@@ -41,11 +41,11 @@ class NetworkManager:
             
             # Verificar se existe rota default (Internet)
             if 'default via' in routes:
-                self.logger.warning("⚠️  Rota default detectada - rede NÃO isolada!")
+                self.logger.warning("[WARN] Rota default detectada - rede NAO isolada!")
                 self.logger.warning("Execute: sudo ip route del default")
                 return False
             
-            self.logger.info("✓ Nenhuma rota default - rede isolada")
+            self.logger.info("[OK] Nenhuma rota default - rede isolada")
             return True
         
         except FileNotFoundError:
@@ -119,7 +119,7 @@ class NetworkManager:
             
             # Verificar se capturou handshake
             if output_file.with_suffix('.cap').exists():
-                self.logger.info(f"✓ Handshake capturado: {output_file}")
+                self.logger.info(f"[OK] Handshake capturado: {output_file}")
                 return True
             else:
                 self.logger.warning("Handshake não capturado")
@@ -176,7 +176,7 @@ class NetworkManager:
                 for line in output.split('\n'):
                     if 'KEY FOUND' in line:
                         key = line.split('[')[-1].split(']')[0].strip()
-                        self.logger.info(f"✓ Chave encontrada: {key}")
+                        self.logger.info(f"[OK] Chave encontrada: {key}")
                         return {'success': True, 'key': key}
             
             self.logger.warning("Chave não encontrada")

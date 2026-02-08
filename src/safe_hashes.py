@@ -55,7 +55,7 @@ class SafeHashesManager:
         """
         Criar ficheiro separado com passwords (para validação apenas)
         
-        ⚠️  AVISO: Este ficheiro contém dados MUITO sensíveis!
+        [WARNING] Este ficheiro contem dados MUITO sensiveis!
         Deve ser:
         - Guardado em locação segura
         - Deletado imediatamente após validação
@@ -74,7 +74,7 @@ class SafeHashesManager:
             password_data.append({
                 'uid': h['uid'],
                 'algorithm': h['algorithm'],
-                'password': h['password'],  # ⚠️ SENSÍVEL!
+                'password': h['password'],  # [WARNING] SENSIVEL!
                 'hash': h['hash']
             })
         
@@ -105,8 +105,8 @@ class SafeHashesManager:
         else:
             # Escrever em plaintext COM AVISO
             with open(output_file, 'w') as f:
-                f.write("# ⚠️  FICHEIRO MUITO SENSÍVEL! CONTÉM PASSWORDS!\n")
-                f.write("# DELETE APÓS USAR\n")
+                f.write("# [WARNING] FICHEIRO MUITO SENSIVEL! CONTEM PASSWORDS!\n")
+                f.write("# DELETE APOS USAR\n")
                 f.write("# NUNCA COMMITAR EM GIT\n\n")
                 json.dump(password_data, f, indent=2)
         

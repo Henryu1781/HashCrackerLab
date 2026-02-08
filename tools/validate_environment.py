@@ -13,10 +13,10 @@ def check_python_version():
     """Verificar versão Python"""
     version = sys.version_info
     if version.major >= 3 and version.minor >= 8:
-        print(f"✓ Python {version.major}.{version.minor}.{version.micro}")
+        print(f"[OK] Python {version.major}.{version.minor}.{version.micro}")
         return True
     else:
-        print(f"✗ Python {version.major}.{version.minor} (requerido >= 3.8)")
+        print(f"[ERROR] Python {version.major}.{version.minor} (requerido >= 3.8)")
         return False
 
 
@@ -39,9 +39,9 @@ def check_python_packages():
     for package in required:
         try:
             importlib.import_module(package)
-            print(f"✓ {package}")
+            print(f"[OK] {package}")
         except ImportError:
-            print(f"✗ {package}")
+            print(f"[ERROR] {package}")
             missing.append(package)
     
     if missing:
@@ -93,7 +93,7 @@ def check_system_tools():
                          stdout=subprocess.DEVNULL, 
                          stderr=subprocess.DEVNULL,
                          timeout=5)
-            print(f"✓ {name}")
+            print(f"[OK] {name}")
             found = True
         except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
              # Se falhar, tentar verificar existencia do executavel nos caminhos comuns manualmente
@@ -102,7 +102,7 @@ def check_system_tools():
              for path in common_paths:
                  full_path = os.path.join(path, exe_name)
                  if os.path.exists(full_path):
-                     print(f"✓ {name} (encontrado em {path})")
+                     print(f"[OK] {name} (encontrado em {path})")
                      found = True
                      # Adicionar ao PATH para o resto do script
                      if path not in os.environ["PATH"]:
@@ -110,7 +110,7 @@ def check_system_tools():
                      break
         
         if not found:
-            print(f"✗ {name}")
+            print(f"[ERROR] {name}")
             missing.append(name)
     
     if missing:
@@ -133,18 +133,18 @@ def check_gpu_support():
         output = result.stdout + result.stderr
         
         if 'CUDA' in output or 'OpenCL' in output:
-            print("✓ GPU detectada pelo Hashcat")
+            print("[OK] GPU detectada pelo Hashcat")
             return True
         else:
-            print("⚠ Nenhuma GPU detectada (CPU apenas)")
+            print("[WARN] Nenhuma GPU detectada (CPU apenas)")
             return True  # Não é crítico
     except:
-        print("⚠ Não foi possível verificar GPU")
+        print("[WARN] Nao foi possivel verificar GPU")
         return True
 
 
 def check_directories():
-    """Verificar estrutura de diretórios"""
+    """Verificar estrutura de diretórios e criar se necessário"""
     required_dirs = [
         'wordlists',
         'rules',
@@ -158,16 +158,23 @@ def check_directories():
     ]
     
     missing = []
+    created = []
     
     for dir_name in required_dirs:
-        if Path(dir_name).exists():
-            print(f"✓ {dir_name}/")
+        path = Path(dir_name)
+        if path.exists():
+            print(f"[OK] {dir_name}/")
         else:
-            print(f"✗ {dir_name}/")
-            missing.append(dir_name)
+            try:
+                path.mkdir(parents=True, exist_ok=True)
+                print(f"[FIX] Criado: {dir_name}/")
+                created.append(dir_name)
+            except Exception as e:
+                print(f"[ERROR] Falha ao criar {dir_name}/: {e}")
+                missing.append(dir_name)
     
     if missing:
-        print(f"\nCriar: mkdir -p {' '.join(missing)}")
+        print(f"\n[!] Impossível criar: {', '.join(missing)} (verifique permissoes)")
         return False
     
     return True
@@ -201,7 +208,7 @@ def main():
     
     all_passed = True
     for name, result in results:
-        status = "✓ OK" if result else "✗ FALHOU"
+        status = "[OK]" if result else "[ERROR] FALHOU"
         print(f"{name}: {status}")
         if not result:
             all_passed = False
@@ -209,10 +216,10 @@ def main():
     print("="*50)
     
     if all_passed:
-        print("\n✓ Ambiente pronto para uso!")
+        print("\n[OK] Ambiente pronto para uso!")
         return 0
     else:
-        print("\n✗ Corrija os problemas antes de prosseguir")
+        print("\n[ERROR] Corrija os problemas antes de prosseguir")
         return 1
 
 

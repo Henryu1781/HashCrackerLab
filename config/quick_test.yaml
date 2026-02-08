@@ -13,8 +13,16 @@ experiment:
         salt: true
     
     password_patterns:
-      - "test{}"      # test0, test1, test2...
-      - "password{}"  # password0, password1...
+      - "password"
+      - "123456"
+      - "qwerty"
+      - "letmein"
+      - "monkey"
+      - "princess"
+      - "sunshine"
+      - "unknown1"
+      - "unknown2"
+      - "unknown3"
   
   cracking:
     modes:

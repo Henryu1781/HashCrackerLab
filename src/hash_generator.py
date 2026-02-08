@@ -76,7 +76,7 @@ class HashGenerator:
         hash_data = {
             'uid': uid,
             'algorithm': algo,
-            'password': password,  # Guardado para verificação (⚠️ NÃO fazer em produção! Dados sensíveis!)
+            'password': password,  # Guardado para verificacao ([WARNING] NAO fazer em producao! Dados sensiveis!)
             'timestamp': datetime.now().isoformat(),
         }
         

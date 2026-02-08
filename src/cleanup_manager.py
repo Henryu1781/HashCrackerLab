@@ -82,7 +82,7 @@ class CleanupManager:
             with open(report_file, 'w') as f:
                 json.dump(cleanup_report, f, indent=2)
             
-            self.logger.info(f"✓ Limpeza concluída: {len(cleanup_report['actions'])} ações")
+            self.logger.info(f"[OK] Limpeza concluida: {len(cleanup_report['actions'])} acoes")
         
         except Exception as e:
             self.logger.error(f"Erro durante limpeza: {e}")
@@ -180,7 +180,7 @@ class CleanupManager:
                         self.logger.error(f"Ficheiro ainda existe: {file_path}")
                         return False
             
-            self.logger.info("✓ Limpeza verificada com sucesso")
+            self.logger.info("[OK] Limpeza verificada com sucesso")
             return True
         
         except Exception as e:

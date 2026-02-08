@@ -1,0 +1,90 @@
+# Configuração Avançada - Múltiplos Modos de Ataque
+experiment:
+  name: "advanced_attacks"
+  description: "Teste de todos os modos de ataque do Hashcat"
+  seed: 999
+  
+  hash_generation:
+    count: 30  # 30 hashes para testes rápidos
+    algorithms:
+      - name: "md5"
+        salt: false
+      - name: "sha256"
+        salt: true
+      - name: "bcrypt"
+        cost: 8  # Custo baixo para testes
+    
+    password_patterns:
+      - "test{}"          # test0, test1...
+      - "password{:02d}"  # password00, password01...
+      - "admin{}"         # admin0, admin1...
+  
+  cracking:
+    modes:
+      # 1. Dictionary Attack (Básico)
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou-small.txt"
+        rules: null
+        max_time: 120
+      
+      # 2. Dictionary + Rules (Mutações)
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou-small.txt"
+        rules: "rules/best66.rule"
+        max_time: 180
+      
+      # 3. Brute Force (Máscaras)
+      - type: "brute-force"
+        mask: "?l?l?l?l"  # 4 lowercase
+        max_time: 120
+      
+      # 4. Combinator (Combina 2 wordlists)
+      - type: "combinator"
+        wordlist1: "wordlists/rockyou-small.txt"
+        wordlist2: "wordlists/rockyou-small.txt"
+        max_time: 240
+      
+      # 5. Hybrid: Wordlist + Mask (ex: password123)
+      - type: "hybrid-wordlist-mask"
+        wordlist: "wordlists/rockyou-small.txt"
+        mask: "?d?d?d"  # palavra + 3 dígitos
+        max_time: 240
+      
+      # 6. Hybrid: Mask + Wordlist (ex: AA_password)
+      - type: "hybrid-mask-wordlist"
+        mask: "?u?u"  # 2 maiúsculas + palavra
+        wordlist: "wordlists/rockyou-small.txt"
+        max_time: 240
+      
+      # 7. Máscaras personalizadas avançadas
+      - type: "brute-force"
+        mask: "?u?l?l?l?d?d"  # Maiúscula + 3 minúsculas + 2 dígitos (ex: Test12)
+        max_time: 180
+      
+      # 8. Dictionary com rules avançadas
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou-small.txt"
+        rules: "rules/d3ad0ne.rule"
+        max_time: 240
+    
+    workers:
+      gpu:
+        enabled: true
+        host: "localhost"
+      cpu:
+        enabled: false
+  
+  wifi:
+    enabled: false
+  
+  output:
+    base_dir: "results/{experiment_name}_{timestamp}"
+    logs: true
+    metrics: true
+    export_formats: ["csv", "json"]
+  
+  security:
+    isolated_network: true
+    auto_cleanup: true
+    cleanup_delay: 600  # 10 minutos
+

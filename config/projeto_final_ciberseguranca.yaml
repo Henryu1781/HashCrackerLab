@@ -1,0 +1,173 @@
+---
+# config/projeto_final_ciberseguranca.yaml
+# Configuração para Projeto Final de Cibersegurança
+# Demonstra: WiFi cracking + Telnet credential harvesting + Hash cracking
+
+experiment:
+  name: "projeto_final_ciberseguranca"
+  description: "Projeto Final: Cracking WiFi + Telnet Authentication + Hash Extraction"
+  
+network:
+  wifi:
+    network_name: "LAB-SERVERS"
+    password: "Cibersegura"  # Alvo: descobrir esta password
+    method: "wifi_cracker.py"
+    
+  telnet:
+    enabled: true
+    server: "192.168.100.1"  # Router simulando Telnet
+    port: 23
+    username: "duarte"
+    password: "Cibersegura"
+    hash_algorithm: "sha256"
+
+hash_generation:
+  algorithms:
+    - name: "md5"
+      count: 5
+    - name: "sha256"
+      count: 5
+      
+  # Adicionar hashes capturados do Telnet
+  include_telnet_hashes: true
+  telnet_capture_file: "results/captured_telnet_credentials.json"
+
+cracking:
+  attack_modes:
+    # 1. Dictionary Attack (Rápido)
+    - mode: "dictionary"
+      type: "dictionary"
+      wordlist: "wordlists/custom.txt"  # Contem "Cibersegura"
+      max_time: 60
+      
+    # 2. Dictionary + Rules (Mutações)
+    - mode: "dictionary_rules"
+      type: "dictionary"
+      wordlist: "wordlists/rockyou-small.txt"
+      rules: "rules/best66.rule"
+      max_time: 120
+
+    # 3. Brute-Force (Mask Attack - Pequeno para demo)
+    - mode: "bruteforce_digits"
+      type: "brute-force"
+      mask: "?d?d?d?d?d?d"  # 6 digitos (PINs)
+      max_time: 60
+
+    # 4. Hybrid (Wordlist + 2 digits)
+    - mode: "hybrid_append"
+      type: "hybrid"
+      wordlist: "wordlists/custom.txt"
+      mask: "?d?d"
+      max_time: 60
+    
+  # Config especial para WiFi + Telnet
+  wifi_cracking:
+    enabled: true
+    monitor_interface: "wlan0mon"
+    timeout_seconds: 120
+    force_deauth: true
+    
+  telnet_credential_extraction:
+    enabled: true
+    wireshark_filter: "tcp.port == 23"
+    extract_hashes: true
+
+system:
+  # Tempos para demo
+  timeout_seconds: 300
+  cleanup_delay: 600
+  gpu_required: false  # CPU OK
+  
+  # Logging
+  verbose: true
+  log_telnet_packets: true
+  save_pcap: true
+
+performance:
+  # Máquinas envolvidas
+  machines:
+    - name: "arch"
+      role: "orchestrator_gpu_cracking"
+      ip: "192.168.100.10"
+      
+    - name: "kali"
+      role: "wifi_capture"
+      ip: "192.168.100.20"
+      
+    - name: "windows1_duarte"
+      role: "telnet_traffic_generation"
+      ip: "192.168.100.30"
+      
+    - name: "windows2_francisco"
+      role: "wireshark_monitoring"
+      ip: "192.168.100.31"
+
+deliverables:
+  # O que produzir na apresentação
+  - wifi_handshake_capture: "capture-LAB-SERVERS.cap"
+  - wifi_password_cracked: "Cibersegura"
+  - telnet_traffic_pcap: "wireshark_capture.pcap"
+  - extracted_credentials: "telnet_credentials.json"
+  - hashes_cracked: "14/20 (70%)"
+  - final_report: "REPORT_PROJETO_FINAL.md"
+
+timeline:
+  # Cronograma para 30 minutos
+  phases:
+    phase1_setup:
+      duration_minutes: 3
+      tasks:
+        - "Conectar todas as máquinas"
+        - "Iniciar interfaces WiFi em modo monitor (Kali)"
+        - "Verificar conectividade entre máquinas"
+        
+    phase2_wifi_capture:
+      duration_minutes: 5
+      tasks:
+        - "Escanear redes WiFi (Kali)"
+        - "Identificar LAB-SERVERS"
+        - "Capturar WPA handshake (aireplay-ng deauth)"
+        
+    phase3_telnet_traffic:
+      duration_minutes: 3
+      tasks:
+        - "Gerar tráfego Telnet com autenticação (Duarte)"
+        - "Capturar em Wireshark (Francisco)"
+        - "Extrair hashes do tráfego"
+        
+    phase4_cracking:
+      duration_minutes: 10
+      tasks:
+        - "Crackar WiFi handshake (aircrack-ng)"
+        - "Crackar hashes Telnet (hashcat)"
+        - "Mostrar resultados em tempo real"
+        
+    phase5_demo_results:
+      duration_minutes: 5
+      tasks:
+        - "Mostrar PASSWORD WiFi descoberta"
+        - "Mostrar credenciais extraídas"
+        - "Análise de segurança"
+        - "Q&A"
+
+metrics:
+  # Métricas esperadas
+  expected_results:
+    wifi_password_found: true
+    telnet_credentials_captured: true
+    hashes_cracked_percentage: "70%"
+    total_duration_seconds: 30
+    files_generated: 8
+    
+  success_criteria:
+    - "WiFi password descoberto: Cibersegura ✅"
+    - "Tráfego Telnet capturado em Wireshark ✅"
+    - "Hashes extraídos e crackeados ✅"
+    - "Credenciais visíveis em plaintext no pcap ✅"
+
+security_notes:
+  - "Este projeto é EDUCACIONAL (lab seguro)"
+  - "WiFi é fictício (simulação)"
+  - "Telnet é apenas para demonstração (nunca usar em produção!)"
+  - "Passwords fornecidas são conhecidas (controle de demo)"
+  - "Objetivo: Demonstrar importância de criptografia e autenticação segura"

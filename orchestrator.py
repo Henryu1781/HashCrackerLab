@@ -68,18 +68,18 @@ class Orchestrator:
             config, errors = ConfigValidator.load_and_validate(Path(self.config_path))
             
             if errors:
-                print(f"{Fore.RED}✗ Erros de configuração:{Style.RESET_ALL}")
+                print(f"{Fore.RED}[ERROR] Erros de configuração:{Style.RESET_ALL}")
                 for error in errors:
-                    print(f"  {Fore.RED}• {error}{Style.RESET_ALL}")
+                    print(f"  {Fore.RED}- {error}{Style.RESET_ALL}")
                 sys.exit(1)
             
             # Aplicar defaults
             config = ConfigValidator.apply_defaults(config)
             
-            print(f"{Fore.GREEN}✓ Configuração válida: {self.config_path}{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[OK] Configuração válida: {self.config_path}{Style.RESET_ALL}")
             return config
         except Exception as e:
-            print(f"{Fore.RED}✗ Erro ao carregar configuração: {e}{Style.RESET_ALL}")
+            print(f"{Fore.RED}[ERROR] Erro ao carregar configuração: {e}{Style.RESET_ALL}")
             sys.exit(1)
     
     def _setup_output_dir(self) -> Path:
@@ -107,7 +107,7 @@ class Orchestrator:
             
             return output_dir
         except Exception as e:
-            print(f"{Fore.RED}✗ Erro ao criar diretório de output: {e}{Style.RESET_ALL}")
+            print(f"{Fore.RED}[ERROR] Erro ao criar diretório de output: {e}{Style.RESET_ALL}")
             sys.exit(1)
     
     def _setup_logging(self):
@@ -135,7 +135,7 @@ class Orchestrator:
                 if not self.network_manager.verify_isolation():
                     self.logger.error("Rede não está isolada!")
                     return False
-                print(f"{Fore.GREEN}✓ Rede isolada{Style.RESET_ALL}\n")
+                print(f"{Fore.GREEN}[OK] Rede isolada{Style.RESET_ALL}\n")
             
             # 2. Gerar hashes
             print(f"{Fore.YELLOW}[2/6] Gerando hashes...{Style.RESET_ALL}")
@@ -150,33 +150,33 @@ class Orchestrator:
             # Criar ficheiro de passwords (com aviso)
             password_file = self.output_dir / "hashes" / ".passwords"
             SafeHashesManager.create_password_file(hashes, password_file, encrypt=False)
-            self.logger.warning(f"⚠️  Passwords em plaintext em: {password_file} (DELETE APÓS USAR)")
+            self.logger.warning(f"[WARN] Passwords em plaintext em: {password_file} (DELETE APOS USAR)")
             
-            print(f"{Fore.GREEN}✓ {len(hashes)} hashes gerados{Style.RESET_ALL}\n")
+            print(f"{Fore.GREEN}[OK] {len(hashes)} hashes gerados{Style.RESET_ALL}\n")
             
             # 3. Distribuir trabalho e executar cracking
             if self.dry_run:
                 print(f"{Fore.YELLOW}[3/6] Dry-run: a saltar cracking...{Style.RESET_ALL}")
                 results = self._build_dry_run_results(hashes)
-                print(f"{Fore.GREEN}✓ Dry-run concluído{Style.RESET_ALL}\n")
+                print(f"{Fore.GREEN}[OK] Dry-run concluido{Style.RESET_ALL}\n")
             else:
                 print(f"{Fore.YELLOW}[3/6] Executando cracking...{Style.RESET_ALL}")
                 results = self.cracking_manager.run_cracking(
                     hashes_file,
                     self.output_dir / "cracked"
                 )
-                print(f"{Fore.GREEN}✓ Cracking concluído{Style.RESET_ALL}\n")
+                print(f"{Fore.GREEN}[OK] Cracking concluido{Style.RESET_ALL}\n")
             
             # 4. Coletar métricas
             print(f"{Fore.YELLOW}[4/6] Coletando métricas...{Style.RESET_ALL}")
             metrics = self.metrics_collector.collect_metrics(hashes, results)
             self.metrics_collector.export_metrics(metrics)
-            print(f"{Fore.GREEN}✓ Métricas coletadas{Style.RESET_ALL}\n")
+            print(f"{Fore.GREEN}[OK] Metricas coletadas{Style.RESET_ALL}\n")
             
             # 5. Gerar relatório
             print(f"{Fore.YELLOW}[5/6] Gerando relatório...{Style.RESET_ALL}")
             self._generate_report(metrics)
-            print(f"{Fore.GREEN}✓ Relatório gerado{Style.RESET_ALL}\n")
+            print(f"{Fore.GREEN}[OK] Relatorio gerado{Style.RESET_ALL}\n")
             
             # 6. Limpeza (se configurado)
             if self.config.get('experiment', {}).get('security', {}).get('auto_cleanup', False):
@@ -187,7 +187,7 @@ class Orchestrator:
             # Sucesso
             duration = (datetime.now() - self.start_time).total_seconds()
             print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}✓ Experiência concluída com sucesso!{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[OK] Experiencia concluida com sucesso!{Style.RESET_ALL}")
             print(f"{Fore.GREEN}Duração: {duration:.2f}s{Style.RESET_ALL}")
             print(f"{Fore.GREEN}Resultados em: {self.output_dir}{Style.RESET_ALL}")
             print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}\n")
@@ -199,7 +199,7 @@ class Orchestrator:
             self.logger.warning("Experiência interrompida")
             return False
         except Exception as e:
-            print(f"\n{Fore.RED}✗ Erro durante execução: {e}{Style.RESET_ALL}")
+            print(f"\n{Fore.RED}[ERROR] Erro durante execucao: {e}{Style.RESET_ALL}")
             self.logger.error(f"Erro fatal: {e}", exc_info=True)
             return False
     
@@ -271,7 +271,7 @@ def main():
     
     # Verificar se ficheiro existe
     if not os.path.exists(args.config):
-        print(f"{Fore.RED}✗ Ficheiro de configuração não encontrado: {args.config}{Style.RESET_ALL}")
+        print(f"{Fore.RED}[ERROR] Ficheiro de configuracao nao encontrado: {args.config}{Style.RESET_ALL}")
         sys.exit(1)
     
     # Executar orquestrador
