@@ -59,6 +59,142 @@ Documento único com setup, passos e falas — tudo por ordem temporal.
 
 ---
 
+## 🌐 SETUP DO ROUTER + IPs (Antes da apresentação)
+
+### Router (AP de laboratório)
+1. Ligar o router à corrente.
+2. Ligar um cabo de rede do router para o portátil do Henrique (LAN do router → porta Ethernet do PC).
+3. Aguardar 1–2 minutos até as luzes ficarem estáveis.
+4. No PC do Henrique, abrir o navegador.
+5. No navegador, escrever o IP do router (normalmente `192.168.0.1` ou `192.168.1.1`) e carregar ENTER.
+6. Fazer login no painel do router.
+   - Se pedirem user/pass e não souberes, usar o que está na etiqueta do router.
+7. Ir ao menu **Wireless** / **Wi‑Fi**.
+8. Definir o **SSID** exatamente como: `LAB-SERVERS`.
+9. Definir **Security / Encryption** como **WPA2-PSK (AES)**.
+10. Definir a **Password/Key** exatamente como: `Cibersegura`.
+11. Guardar/Apply/Save.
+12. Se o router pedir para reiniciar, confirmar o reinício.
+13. Aguardar 1–2 minutos até a rede Wi‑Fi voltar a aparecer.
+14. Ir ao menu **LAN** / **Network**.
+15. Definir o **IP do router (Gateway)** como: `192.168.100.1`.
+16. Definir a **Máscara** como: `255.255.255.0`.
+17. Guardar/Apply/Save.
+18. Ir ao menu **DHCP Server**.
+19. Confirmar que o DHCP está **ON**.
+20. Definir o range DHCP (para não bater com os IPs fixos):
+   - Start: `192.168.100.100`
+   - End: `192.168.100.200`
+21. Guardar/Apply/Save.
+22. Se o router reiniciar, voltar a entrar no painel usando `http://192.168.100.1`.
+
+### IPs fixos (ou DHCP reservado)
+**Opção A — DHCP reservado (preferido no router):**
+1. No painel do router, ir a **LAN** → **DHCP** → **Address Reservation** (ou “Reserva DHCP”).
+2. Para cada máquina, adicionar uma reserva com **MAC Address** e **IP**:
+   - Henrique (Arch): `192.168.100.10`
+   - Ferro (Kali): `192.168.100.20`
+   - Duarte (Windows1): `192.168.100.30`
+   - Francisco (Windows2): `192.168.100.31`
+3. Guardar/Apply/Save.
+4. Desligar e voltar a ligar o Wi‑Fi em cada máquina para receber o IP reservado.
+
+**Opção B — IP fixo manual (se não houver reserva):**
+1. Confirmar o **Gateway** do router (ex.: `192.168.100.1`).
+2. Em cada máquina, definir IP fixo, máscara e gateway:
+   - **IP:** conforme tabela acima
+   - **Máscara:** `255.255.255.0`
+   - **Gateway:** `192.168.100.1`
+   - **DNS:** `1.1.1.1` ou `8.8.8.8`
+
+**Comandos para IP fixo no Windows (Duarte/Francisco):**
+1. Abrir PowerShell como **Administrador**.
+2. Ver o nome da interface Wi‑Fi:
+   ```powershell
+   Get-NetAdapter | Where-Object {$_.Status -eq "Up"}
+   ```
+3. Definir IP fixo (substituir `Wi-Fi` se o nome for diferente):
+   ```powershell
+   # Duarte (Windows1)
+   New-NetIPAddress -InterfaceAlias "Wi-Fi" -IPAddress 192.168.100.30 -PrefixLength 24 -DefaultGateway 192.168.100.1
+   Set-DnsClientServerAddress -InterfaceAlias "Wi-Fi" -ServerAddresses 1.1.1.1,8.8.8.8
+
+   # Francisco (Windows2)
+   New-NetIPAddress -InterfaceAlias "Wi-Fi" -IPAddress 192.168.100.31 -PrefixLength 24 -DefaultGateway 192.168.100.1
+   Set-DnsClientServerAddress -InterfaceAlias "Wi-Fi" -ServerAddresses 1.1.1.1,8.8.8.8
+   ```
+
+**Comandos para IP fixo no Arch/Kali (Henrique/Ferro):**
+1. Confirmar a ligação Wi‑Fi ativa (deve ser `LAB-SERVERS`):
+   ```bash
+   nmcli -t -f NAME,DEVICE con show --active
+   ```
+2. Definir IP fixo (a ligação chama-se `LAB-SERVERS`):
+   ```bash
+   # Henrique (Arch)
+   nmcli con mod "LAB-SERVERS" ipv4.addresses 192.168.100.10/24 ipv4.gateway 192.168.100.1 ipv4.dns "1.1.1.1 8.8.8.8" ipv4.method manual
+   nmcli con down "LAB-SERVERS" && nmcli con up "LAB-SERVERS"
+
+   # Ferro (Kali)
+   nmcli con mod "LAB-SERVERS" ipv4.addresses 192.168.100.20/24 ipv4.gateway 192.168.100.1 ipv4.dns "1.1.1.1 8.8.8.8" ipv4.method manual
+   nmcli con down "LAB-SERVERS" && nmcli con up "LAB-SERVERS"
+   ```
+
+### Verificação rápida da rede
+1. Em cada máquina, confirmar o IP:
+   - **Windows (PowerShell):**
+     ```powershell
+     ipconfig
+     ```
+   - **Linux (Terminal):**
+     ```bash
+     ip a
+     ```
+2. Confirmar que o IP, máscara e gateway batem com o definido.
+3. No PC do Henrique, testar ping para todos:
+   ```bash
+   ping -c 2 192.168.100.20
+   ping -c 2 192.168.100.30
+   ping -c 2 192.168.100.31
+   ```
+4. Se algum ping falhar, desligar e ligar o Wi‑Fi dessa máquina e repetir.
+5. Confirmar que todos os IPs estão na mesma sub-rede `192.168.100.0/24`.
+
+### Transferência do ficheiro `.hc22000` (Ferro → Henrique)
+**Objetivo:** o Henrique ficar com o ficheiro em `hashes/wifi_sample.hc22000` (é o nome que o `orchestrator.py` procura para a demo WPA2).
+
+**No Ferro (Kali):**
+1. Confirmar o IP do Kali:
+   ```bash
+   ip a
+   ```
+2. Garantir que o SSH está ativo (para permitir `scp`):
+   ```bash
+   sudo systemctl enable --now ssh
+   sudo systemctl status ssh --no-pager
+   ```
+3. Encontrar o `.hc22000` gerado (o caminho pode variar):
+   ```bash
+   find "$PWD" -maxdepth 5 -type f -name "*.hc22000" -o -name "*.22000" 2>/dev/null
+   ```
+   - Se o `wifi_cracker.py` gerar um output com caminho, usar esse.
+
+**No Henrique (Arch):**
+1. Criar a pasta de destino (se não existir):
+   ```bash
+   mkdir -p hashes
+   ```
+2. Copiar do Ferro para o nome esperado (substituir `CAMINHO_NO_KALI`):
+   ```bash
+   scp ferro@192.168.100.20:CAMINHO_NO_KALI hashes/wifi_sample.hc22000
+   ```
+3. Confirmar que o ficheiro existe:
+   ```bash
+   ls -lh hashes/wifi_sample.hc22000
+   ```
+
+---
+
 ## 🗣️ GUIÃO POR TEMPO (Passos → Falas + Comandos)
 
 ### 🟢 FASE 0 — Preparação (5 minutos antes)
@@ -71,7 +207,7 @@ Documento único com setup, passos e falas — tudo por ordem temporal.
    ```
    **Comando (Windows):**
    ```powershell
-   \venv\Scripts\Activate.ps1
+   .\venv\Scripts\Activate.ps1
    ```
 3. Validar ambiente.
    **Comando:**
@@ -101,14 +237,14 @@ Documento único com setup, passos e falas — tudo por ordem temporal.
 ### 🟡 FASE 1 — Introdução & WiFi (0:00–3:00)
 **Passos:**
 1. Henrique dá ENTER no orquestrador (fase WiFi).
-   **Comando:** ENTER
+   *(Ação: carregar ENTER)*
 2. Ferro executa o ataque.
    **Comando:**
    ```bash
    python wifi_cracker.py --network "LAB-SERVERS" --monitor wlan0mon
    ```
 3. Ao surgir **KEY FOUND**, Henrique confirma no orquestrador.
-   **Comando:** s
+   *(Ação: escrever `s` e carregar ENTER)*
 
 **Falas:**
 - **Henrique (abertura):**
@@ -127,15 +263,14 @@ Documento único com setup, passos e falas — tudo por ordem temporal.
 ### 🟠 FASE 2 — Captura de Tráfego (3:00–6:00)
 **Passos:**
 1. Henrique avança para a fase Telnet no orquestrador.
-   **Comando:** ENTER
+   *(Ação: carregar ENTER)*
 2. Francisco inicia a captura no Wireshark.
 3. Duarte executa (com o IP real do Francisco).
    **Comando:**
    ```powershell
-   # Substituir IP_DO_FRANCISCO pelo IP real do Francisco (ex: 192.168.1.50)
-   python telnet_authenticated_traffic.py --target IP_DO_FRANCISCO --user duarte --password Cibersegura --hash-algo plaintext --count 20
+   python telnet_authenticated_traffic.py --target 192.168.100.31 --user duarte --password Cibersegura --hash-algo plaintext --count 20
    ```
-4. Francisco abre Follow TCP Stream e aponta o ecrã.
+4. Francisco abre **Follow TCP Stream** e aponta o ecrã.
 
 **Falas:**
 - **Henrique (transição):**
