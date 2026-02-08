@@ -45,21 +45,25 @@ sudo airmon-ng start wlan0
 python wifi_cracker.py --network "LAB-SERVERS" --monitor wlan0mon
 ```
 
-#### 🟢 Duarte (Gerador Telnet)
-Envia credenciais de teste constantemente.
+#### 🟣 Francisco (Servidor + Analista)
+Inicia o servidor Telnet fake e usa o **Wireshark** para validar o tráfego em claro.
 ```powershell
-python telnet_authenticated_traffic.py --target 192.168.100.255 --user duarte --password Cibersegura --hash-algo plaintext
+python telnet_authenticated_traffic.py --server --port 23
 ```
 
-#### 🟣 Francisco (Analista)
-Usa o **Wireshark** para validar que as credenciais do Duarte estão a passar em claro na rede.
+#### 🟢 Duarte (Gerador Telnet)
+Envia credenciais de teste para o servidor do Francisco.
+```powershell
+# Substituir IP_DO_FRANCISCO pelo IP real do Francisco (ex: 192.168.1.50)
+python telnet_authenticated_traffic.py --target IP_DO_FRANCISCO --user duarte --password Cibersegura --hash-algo plaintext
+```
 
 ---
 
 ## 📄 Documentação Relevante
-- **Instruções Detalhadas por Pessoa**: [INSTRUCOES_POR_PESSOA.md](INSTRUCOES_POR_PESSOA.md)
-- **Cheat Sheet da Apresentação**: [CHEAT_SHEET.md](CHEAT_SHEET.md)
+- **Guia de Apresentação (Setup + Guião)**: [GUIA_DA_APRESENTACAO.md](GUIA_DA_APRESENTACAO.md)
 - **Guia Técnico Completo**: [FULL_INTEGRATION_GUIDE.md](FULL_INTEGRATION_GUIDE.md)
+- **Setup de Rede**: [docs/NETWORK_SETUP.md](docs/NETWORK_SETUP.md)
 
 ---
 *HashCrackerLab - Build Final Verified*

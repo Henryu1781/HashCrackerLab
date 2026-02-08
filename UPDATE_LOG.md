@@ -6,6 +6,11 @@
 - **Benchmark GPU WPA2**: Adicionado modo 22000 (PMKID/EAPOL) ao orchestrator para demonstrar velocidade da GPU.
 - **Master Script**: Criado `GUIA_DA_APRESENTACAO.md` com falas e timeline passo-a-passo.
 
+### Corrigido
+- **Documentação Telnet**: Alinhado com servidor fake obrigatório e alvo por IP direto.
+- **Links de Docs**: Removidos links para ficheiros inexistentes e adicionados os corretos.
+- **Typos**: Correção de "Windwos" em `docs/NETWORK_SETUP.md`.
+
 ### Alterado
 - **Configuração**: `config/projeto_final_ciberseguranca.yaml` atualizado com regras específicas para garantir sucesso na demo.
 - **Orquestração**: `full_integration_orchestrator.py` refinado para incluir pausas estratégicas para explicação.

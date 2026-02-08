@@ -22,7 +22,7 @@ Este documento detalha o setup físico e lógico necessário para reproduzir os 
 *   **Uso:** Ligado ao Kali Linux (Ferro) para executar o `airodump-ng` e `aireplay-ng`.
 
 ### 3. Switch / Cablagem (Opcional)
-*   Os PCs "Duarte" (Windwos) e "Francisco" (Windows) devem estar ligados à mesma rede que o Router, seja via WiFi ou Cabo Ethernet, para que os pacotes Telnet trafeguem e possam ser sniffados.
+*   Os PCs "Duarte" (Windows) e "Francisco" (Windows) devem estar ligados à mesma rede que o Router, seja via WiFi ou Cabo Ethernet, para que os pacotes Telnet trafeguem e possam ser sniffados.
 
 ---
 

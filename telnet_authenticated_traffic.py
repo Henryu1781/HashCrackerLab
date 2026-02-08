@@ -316,7 +316,54 @@ class AuthenticatedTelnet:
 
             print(f"  - {cred['username']} : {cred['password_hash'][:16]}... ({cred['hash_algo']})")
 
-    
+    @staticmethod
+    def run_server(host, port):
+        """Modo Servidor: Ouve por conexões Telnet e aceita tudo"""
+        print(f"\n[SERVER] Iniciando servidor Telnet Fake em {host}:{port}...")
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        
+        try:
+            server.bind((host, port))
+            server.listen(5)
+            print(f"[SERVER] Aguardando conexões... (Ctrl+C para parar)")
+            
+            while True:
+                client_sock, addr = server.accept()
+                print(f"[SERVER] Conexão recebida de {addr[0]}:{addr[1]}")
+                
+                # Enviar banner Telnet
+                banner = b"\r\nWelcome to Insecure Corp Telnet Service\r\n"
+                try:
+                    client_sock.send(banner)
+                    client_sock.send(b"login: ")
+                    
+                    # Loop simples de interação para manter vivo enquanto o cliente envia
+                    # O cliente é que manda "user" e "pass", o servidor só tem de aceitar.
+                    # Vamos apenas ler e imprimir o que chega.
+                    while True:
+                        data = client_sock.recv(1024)
+                        if not data:
+                            break
+                        # Opcional: imprimir o que recebe para debug
+                        # print(f"[RX] {data}")
+                        
+                        # Se receber enter, responder qualquer coisa para fingir interatividade
+                        if b'\r' in data or b'\n' in data:
+                             client_sock.send(b"\r\n access denied > ")
+
+                except Exception as e:
+                    print(f"[SERVER] Erro na conexão: {e}")
+                finally:
+                    client_sock.close()
+                    print(f"[SERVER] Conexão fechada.\n")
+                    
+        except KeyboardInterrupt:
+            print("\n[SERVER] Encerrando o servidor.")
+        except Exception as e:
+            print(f"\n[SERVER] Erro fatal: {e}")
+        finally:
+            server.close()
 
     def show_wireshark_instructions(self):
 

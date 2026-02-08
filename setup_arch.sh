@@ -43,14 +43,15 @@ sudo pacman -S --needed --noconfirm \
     git \
     base-devel \
     opencl-headers \
-    ocl-icd
+    ocl-icd \
+    clinfo
 
 echo -e "${YELLOW}[3/8] Verificando suporte GPU...${NC}"
 # NVIDIA
 if lspci | grep -i nvidia &> /dev/null; then
     echo "GPU NVIDIA detectada"
     # Removido 2>/dev/null para mostrar erros de instalação se ocorrerem
-    sudo pacman -S --needed --noconfirm nvidia nvidia-utils opencl-nvidia || \
+    sudo pacman -S --needed --noconfirm nvidia nvidia-utils opencl-nvidia cuda || \
         echo -e "${YELLOW}Aviso: Não foi possível instalar drivers NVIDIA. Continue manualmente se necessário.${NC}"
 fi
 

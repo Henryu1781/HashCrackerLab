@@ -32,6 +32,9 @@ python full_integration_orchestrator.py --mode lab
 - ✅ Credenciais conhecidas
 - ✅ Foco: Conceitos visuais para audiência não-técnica
 
+**Timeline (modo lab completo ~30 min).**
+**Nota:** A apresentação rápida pode usar apenas os blocos principais (6-8 min) conforme o [GUIA_DA_APRESENTACAO.md](GUIA_DA_APRESENTACAO.md).
+
 **Timeline:**
 ```
 T=0min   → Setup
@@ -146,10 +149,11 @@ python full_integration_orchestrator.py --mode pentest
     └─ Result: LAB-SERVERS password discovered
 
 [4] TELNET CREDENTIAL CAPTURE
-    ├─ Windows2: Wireshark tcp.port==23 filter
-    ├─ Windows1: Telnet traffic generation
-    ├─ Windows2: Packet capture + extraction
-    └─ Result: Username + Password visible
+  ├─ Windows2: iniciar servidor fake (python telnet_authenticated_traffic.py --server)
+  ├─ Windows2: Wireshark tcp.port==23 filter
+  ├─ Windows1: Telnet traffic generation (apontar para IP do Windows2)
+  ├─ Windows2: Packet capture + extraction
+  └─ Result: Username + Password visible
 
 [5] GPU HASH CRACKING (6 MODOS)
     ├─ Dictionary attack (-a 0)
