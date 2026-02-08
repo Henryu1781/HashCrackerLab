@@ -383,9 +383,24 @@ class CrackingManager:
     
     def _get_hashcat_type(self, algo: str, hashes: List[Dict] = None) -> int:
         """Mapear algoritmo para hash-type do hashcat"""
-        if algo == 'sha256' and hashes:
-            if any(h.get('salt') for h in hashes):
-                return 1420  # sha256($salt.$pass)
+        
+        # Check for salted variants
+        if hashes:
+            has_salt = any(h.get('salt') for h in hashes)
+            if has_salt:
+                if algo == 'md5':
+                    # mode 10 = md5($pass.$salt), mode 20 = md5($salt.$pass)
+                    # src/hash_generator.py lines 167-172: salt + password
+                    # So it's md5($salt.$pass) which is mode 20
+                    return 20 
+                elif algo == 'sha256':
+                    # mode 1410 = sha256($pass.$salt), mode 1420 = sha256($salt.$pass)
+                    # generator: salt + password -> mode 1420
+                    return 1420
+                elif algo == 'sha1':
+                    # mode 110 = sha1($pass.$salt), mode 120 = sha1($salt.$pass)
+                    # generator: salt + password -> mode 120
+                    return 120
 
         mapping = {
             'md5': 0,

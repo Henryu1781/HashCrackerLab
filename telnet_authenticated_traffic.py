@@ -396,11 +396,9 @@ def main():
 
     parser.add_argument("--show-instructions", action="store_true", help="Mostrar instrues Wireshark")
 
-    parser.add_argument("--wordlist", help="Usar wordlist para mltiplos passwords")
+    parser.add_argument("--wordlist", help="Usar wordlist para múltiplos passwords")
 
-    
-
-parser.add_argument("--server", action="store_true", help="Executar como SERVIDOR (Fake Telnet)")
+    parser.add_argument("--server", action="store_true", help="Executar como SERVIDOR (Fake Telnet)")
     
     args = parser.parse_args()
     

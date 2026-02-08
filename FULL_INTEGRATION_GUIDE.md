@@ -304,6 +304,19 @@ ping 192.168.100.10 # Arch
 ping 192.168.100.20 # Kali
 ```
 
+---
+
+## 🛠️ HARDWARE & REDE
+
+Para detalhes completos de configuração, consulte [docs/NETWORK_SETUP.md](docs/NETWORK_SETUP.md).
+
+**Componentes Chave:**
+- **Router:** TP-Link Archer C20 v6 (SSID: `LAB-SERVERS`)
+- **Adaptador WiFi (Kali):** Compatível com Monitor Mode & Injection (ex: Chipset AR9271/RT3070).
+- **Cablagem:** Switch ou conexão direta ao Router para captura Telnet confiável.
+
+---
+
 ### Execução
 
 ```bash

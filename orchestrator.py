@@ -166,6 +166,48 @@ class Orchestrator:
                     self.output_dir / "cracked"
                 )
                 print(f"{Fore.GREEN}[OK] Cracking concluido{Style.RESET_ALL}\n")
+
+            # --- WPA2 DEMO ---
+            if not self.dry_run:
+                self.run_wifi_gpu_benchmark()
+                
+            # --- BRUTE FORCE EXPLANATION ---
+            if not self.dry_run:
+                self.run_bruteforce_concept_demo()
+
+            # 4. Coletar métricas
+            print(f"{Fore.YELLOW}[4/6] Coletando métricas...{Style.RESET_ALL}")
+            metrics = self.metrics_collector.collect_metrics(hashes, results)
+            self.metrics_collector.export_metrics(metrics)
+            print(f"{Fore.GREEN}[OK] Metricas coletadas{Style.RESET_ALL}\n")
+            
+            # 5. Gerar relatório
+            print(f"{Fore.YELLOW}[5/6] Gerando relatório...{Style.RESET_ALL}")
+            self._generate_report(metrics)
+            print(f"{Fore.GREEN}[OK] Relatorio gerado{Style.RESET_ALL}\n")
+            
+            # 6. Limpeza (se configurado)
+            if self.config.get('experiment', {}).get('security', {}).get('auto_cleanup', False):
+                delay = self.config.get('experiment', {}).get('security', {}).get('cleanup_delay', 0)
+                print(f"{Fore.YELLOW}[6/6] Limpeza agendada para {delay}s...{Style.RESET_ALL}")
+                self.cleanup_manager.schedule_cleanup(self.output_dir, delay)
+            
+            # Sucesso
+            duration = (datetime.now() - self.start_time).total_seconds()
+            print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[OK] Experiencia concluida com sucesso!{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}Duração: {duration:.2f}s{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}Resultados em: {self.output_dir}{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}\n")
+
+        except KeyboardInterrupt:
+            print(f"\n{Fore.YELLOW}[!] Interrompido pelo utilizador{Style.RESET_ALL}")
+        except Exception as e:
+            self.logger.error(f"Erro fatal: {e}")
+            import traceback
+            self.logger.error(traceback.format_exc())
+            print(f"{Fore.RED}[ERROR] Erro fatal: {e}{Style.RESET_ALL}")
+
             
     def run_wifi_gpu_benchmark(self):
         """Demonstrar velocidade de cracking WPA2 no GPU"""
@@ -231,55 +273,6 @@ class Orchestrator:
             print(f"\n{Fore.GREEN}✔ PIN Encontrado: {target} (Simulação CPU){Style.RESET_ALL}")
             print(f"Tempo: {duration:.4f}s")
             print("Nota: Uma GPU faria 00000000-99999999 em milésimos de segundo.")
-
-    def run_experiment(self) -> bool:
-        """Executar todo o experimento conforme config"""
-        try:
-            # Re-generate hashes logic removed for brevity, calling existing structure:
-            
-            # --- WPA2 DEMO ---
-            if not self.dry_run:
-                self.run_wifi_gpu_benchmark()
-                
-            # --- BRUTE FORCE EXPLANATION ---
-            if not self.dry_run:
-                self.run_bruteforce_concept_demo()
-
-            # 4. Coletar métricas
-            print(f"{Fore.YELLOW}[4/6] Coletando métricas...{Style.RESET_ALL}")
-            metrics = self.metrics_collector.collect_metrics(hashes, results)
-            self.metrics_collector.export_metrics(metrics)
-            print(f"{Fore.GREEN}[OK] Metricas coletadas{Style.RESET_ALL}\n")
-            
-            # 5. Gerar relatório
-            print(f"{Fore.YELLOW}[5/6] Gerando relatório...{Style.RESET_ALL}")
-            self._generate_report(metrics)
-            print(f"{Fore.GREEN}[OK] Relatorio gerado{Style.RESET_ALL}\n")
-            
-            # 6. Limpeza (se configurado)
-            if self.config.get('experiment', {}).get('security', {}).get('auto_cleanup', False):
-                delay = self.config.get('experiment', {}).get('security', {}).get('cleanup_delay', 0)
-                print(f"{Fore.YELLOW}[6/6] Limpeza agendada para {delay}s...{Style.RESET_ALL}")
-                self.cleanup_manager.schedule_cleanup(self.output_dir, delay)
-            
-            # Sucesso
-            duration = (datetime.now() - self.start_time).total_seconds()
-            print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}[OK] Experiencia concluida com sucesso!{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}Duração: {duration:.2f}s{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}Resultados em: {self.output_dir}{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}\n")
-            
-            return True
-            
-        except KeyboardInterrupt:
-            print(f"\n{Fore.YELLOW}Experiência interrompida pelo utilizador{Style.RESET_ALL}")
-            self.logger.warning("Experiência interrompida")
-            return False
-        except Exception as e:
-            print(f"\n{Fore.RED}[ERROR] Erro durante execucao: {e}{Style.RESET_ALL}")
-            self.logger.error(f"Erro fatal: {e}", exc_info=True)
-            return False
     
     def _generate_report(self, metrics: Dict):
         """Gerar relatório final da experiência"""
