@@ -24,9 +24,16 @@ network:
 hash_generation:
   algorithms:
     - name: "md5"
-      count: 5
+      count: 2
     - name: "sha256"
-      count: 5
+      count: 2
+  
+  # Adicionar senhas específicas para garantir sucesso nos ataques
+  password_patterns:
+    - "Cibersegura"    # Para Dicionário
+    - "123456"         # Para Brute-Force (PIN 6 digitos)
+    - "password12"     # Para Hibrido (Append 2 digits)
+    - "admin"          # Genérico
       
   # Adicionar hashes capturados do Telnet
   include_telnet_hashes: true

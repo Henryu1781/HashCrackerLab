@@ -16,7 +16,9 @@ Resultado: **Um lab profissional reproduzível em mundo real**
 
 ### 1️⃣ MODO LAB (Educacional - 30 minutos)
 
-**Uso:** Apresentações académicas, sala de aula, demos
+**Uso:** Apresentações académicas, sala de aula, demos.
+
+**Ideal para:** Projeto Final de Cibersegurança (Henrique/Ferro/Duarte/Francisco).
 
 ```bash
 python full_integration_orchestrator.py --mode lab
@@ -24,10 +26,11 @@ python full_integration_orchestrator.py --mode lab
 
 **Características:**
 - ✅ Timeline rigorosa: 30 minutos exactos
-- ✅ Teste rápido: 20 hashes, 70% sucesso
+- ✅ **NOVO**: Visualização de "Tentativa e Erro" (Força Bruta) vs "Dicionário"
+- ✅ **NOVO**: Benchmark explícito WPA2 GPU vs CPU
 - ✅ Rede fictícia: LAB-SERVERS simulada
 - ✅ Credenciais conhecidas
-- ✅ Foco: Conceitos, não realismo
+- ✅ Foco: Conceitos visuais para audiência não-técnica
 
 **Timeline:**
 ```

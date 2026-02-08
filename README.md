@@ -29,11 +29,11 @@ python tools\validate_environment.py
 ### 2. Execução (Por Papel)
 
 #### 🔵 Henrique (Líder/GPU)
-Usa o orquestrador para gerir a demo.
+Usa o orquestrador para gerir a demo. O novo modo interativo inclui demonstração de força bruta visual.
 ```bash
 python full_integration_orchestrator.py --mode lab
 ```
-Para teste de GPU isolado:
+Para teste de GPU isolado (inclui benchmark WPA2 e Demo Visual de Força Bruta):
 ```bash
 python orchestrator.py --config config/projeto_final_ciberseguranca.yaml
 ```

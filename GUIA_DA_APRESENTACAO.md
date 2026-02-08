@@ -92,7 +92,7 @@ Este é o documento único que devem seguir durante a apresentação. Contém o 
 ### 🔴 FASE 3: GPU CRACKING FINAL (Minutos 6-8)
 
 **Henrique (Falando):**
-> "Para terminar, e se apanhássemos apenas o Hash encriptado? Vamos usar o poder da GPU para quebrar várias cifras em segundos."
+> "Para terminar, vamos ver a diferença entre crackear com CPU (como o Ferro fez no WiFi) e usar uma GPU dedicada."
 
 **1. Henrique (Arch):** O orquestrador deve estar na fase final. Se não, corre este comando específico para impressionar:
    ```bash
@@ -100,8 +100,9 @@ Este é o documento único que devem seguir durante a apresentação. Contém o 
    ```
 
 **2. Henrique:**
-   - Mostra a velocidade no ecrã (MH/s).
-   - Explica: "Estamos a testar dicionários, regras de mutação e força bruta simultaneamente."
+   - O Script vai correr o WPA2 Cracking (Dicionário).
+   - **NOVIDADE:** Logo a seguir, vai correr uma "Simulação de Força Bruta".
+   - Explica: "Enquanto o dicionário testa palavras conhecidas, a Força Bruta é **Tentativa e Erro** pura. Testamos 0000, 0001, 0002... até abrir. Com esta GPU, faríamos milhões por segundo."
 
 **3. FIM:** Mostra o relatório final gerado no terminal.
 > "Conclusão: WPA2 fraco, Telnet e Hashes simples não oferecem proteção real. Obrigado."
