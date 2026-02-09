@@ -37,6 +37,7 @@ from src.cleanup_manager import CleanupManager
 from src.logger import setup_logger
 from src.config_validator import ConfigValidator
 from src.safe_hashes import SafeHashesManager
+from src.hashcat_benchmark import HashcatBenchmarker
 
 class Orchestrator:
     """Orquestrador principal do Hash Cracker Lab"""
@@ -176,6 +177,9 @@ class Orchestrator:
             if not self.dry_run:
                 self.run_bruteforce_concept_demo()
 
+            # --- CPU vs GPU BENCHMARK (Hashcat -b) ---
+            results["benchmarks"] = self.run_cpu_gpu_hashcat_benchmark()
+
             # 4. Coletar métricas
             print(f"{Fore.YELLOW}[4/6] Coletando métricas...{Style.RESET_ALL}")
             metrics = self.metrics_collector.collect_metrics(hashes, results)
@@ -201,13 +205,17 @@ class Orchestrator:
             print(f"{Fore.GREEN}Resultados em: {self.output_dir}{Style.RESET_ALL}")
             print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}\n")
 
+            return True
+
         except KeyboardInterrupt:
             print(f"\n{Fore.YELLOW}[!] Interrompido pelo utilizador{Style.RESET_ALL}")
+            return False
         except Exception as e:
             self.logger.error(f"Erro fatal: {e}")
             import traceback
             self.logger.error(traceback.format_exc())
             print(f"{Fore.RED}[ERROR] Erro fatal: {e}{Style.RESET_ALL}")
+            return False
 
             
     def run_wifi_gpu_benchmark(self):
@@ -274,6 +282,62 @@ class Orchestrator:
             print(f"\n{Fore.GREEN}✔ PIN Encontrado: {target} (Simulação CPU){Style.RESET_ALL}")
             print(f"Tempo: {duration:.4f}s")
             print("Nota: Uma GPU faria 00000000-99999999 em milésimos de segundo.")
+
+    def run_cpu_gpu_hashcat_benchmark(self) -> Dict[str, Any]:
+        """Benchmark seguro de CPU vs GPU usando `hashcat -b`.
+
+        Não crackeia passwords reais; apenas mede throughput do algoritmo.
+        """
+        print(f"\n{Fore.YELLOW}=== DEMONSTRAÇÃO EXTRA: BENCHMARK CPU vs GPU (HASHCAT) ==={Style.RESET_ALL}")
+
+        bench_cfg = self.config.get("experiment", {}).get("benchmark", {})
+        enabled = bench_cfg.get("enabled", True)
+        if not enabled:
+            self.logger.info("Benchmark CPU/GPU desativado por config")
+            return {"enabled": False}
+
+        # Modos escolhidos para demonstrar diferença entre hashes rápidos vs lentos
+        hash_modes = bench_cfg.get("hash_modes", [0, 1400, 3200])
+        benchmark_time = int(bench_cfg.get("benchmark_time", 3))
+
+        # Resolver hashcat (inclui Windows)
+        hashcat_cmd, hashcat_cwd = self.cracking_manager._hashcat_command()
+        bench = HashcatBenchmarker(hashcat_cmd=hashcat_cmd, hashcat_cwd=hashcat_cwd)
+
+        data = bench.run_cpu_vs_gpu(
+            hash_modes=list(hash_modes),
+            benchmark_time=benchmark_time,
+            extra_args=bench_cfg.get("extra_args", []),
+            timeout=int(bench_cfg.get("timeout", 90)),
+        )
+
+        # Print resumo amigável
+        by_mode = data.get("by_mode", {})
+        print(f"Tempo de benchmark: {benchmark_time}s por algoritmo")
+
+        missing_cpu = False
+        has_gpu = False
+        for mode, info in by_mode.items():
+            name = info.get("hash_name") or str(mode)
+            cpu = (info.get("cpu") or {}).get("speed_raw")
+            gpu = (info.get("gpu") or {}).get("speed_raw")
+            ratio = info.get("ratio_gpu_over_cpu")
+            ratio_s = f"{ratio:.1f}x" if ratio else "n/a"
+            print(f"- {mode} ({name}): CPU={cpu or 'n/a'} | GPU={gpu or 'n/a'} | GPU/CPU={ratio_s}")
+
+            if not cpu:
+                missing_cpu = True
+            if gpu:
+                has_gpu = True
+
+        if has_gpu and missing_cpu:
+            print(
+                f"{Fore.CYAN}Nota:{Style.RESET_ALL} CPU=n/a normalmente significa que o sistema não tem um dispositivo OpenCL do tipo CPU instalado.\n"
+                "Em Linux, instale um runtime OpenCL CPU (ex.: `pocl-opencl-icd`) para medir CPU com o hashcat.\n"
+                "A medição de GPU continua válida para a comparação."
+            )
+
+        return {"enabled": True, **data}
     
     def _generate_report(self, metrics: Dict):
         """Gerar relatório final da experiência"""
@@ -282,18 +346,31 @@ class Orchestrator:
         with open(report_file, 'w') as f:
             f.write(f"# Relatório - {self.config['experiment']['name']}\n\n")
             f.write(f"**Data:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-            f.write(f"**Duração:** {metrics.get('total_duration', 0):.2f}s\n\n")
+            f.write(f"**Duração (cracking):** {metrics.get('total_duration', 0):.2f}s\n\n")
             
             f.write("## Resumo de Resultados\n\n")
             f.write(f"- Total de hashes: {metrics.get('total_hashes', 0)}\n")
-            f.write(f"- Hashes crackeados: {metrics.get('cracked_count', 0)}\n")
+            f.write(f"- Hashes crackeados: {metrics.get('total_cracked', 0)}\n")
             f.write(f"- Taxa de sucesso: {metrics.get('success_rate', 0):.2%}\n\n")
             
-            f.write("## Performance por Algoritmo\n\n")
+            f.write("## Resultados por Algoritmo\n\n")
             for algo, data in metrics.get('by_algorithm', {}).items():
                 f.write(f"### {algo}\n")
                 f.write(f"- Crackeados: {data.get('cracked', 0)}/{data.get('total', 0)}\n")
-                f.write(f"- Tempo médio: {data.get('avg_time', 0):.2f}s\n\n")
+                f.write(f"- Taxa: {data.get('success_rate', 0):.2%}\n\n")
+
+            bench = metrics.get('benchmarks')
+            if bench and bench.get('enabled'):
+                f.write("## Benchmark CPU vs GPU (Hashcat -b)\n\n")
+                f.write(f"Tempo por algoritmo: {bench.get('benchmark_time', 0)}s\n\n")
+                for mode, info in (bench.get('by_mode') or {}).items():
+                    name = info.get('hash_name') or str(mode)
+                    cpu = (info.get('cpu') or {}).get('speed_raw')
+                    gpu = (info.get('gpu') or {}).get('speed_raw')
+                    ratio = info.get('ratio_gpu_over_cpu')
+                    ratio_s = f"{ratio:.1f}x" if ratio else "n/a"
+                    f.write(f"- {mode} ({name}): CPU={cpu or 'n/a'} | GPU={gpu or 'n/a'} | GPU/CPU={ratio_s}\n")
+                f.write("\n")
         
         self.logger.info(f"Relatório gerado: {report_file}")
 
@@ -348,8 +425,12 @@ def main():
     
     # Executar orquestrador
     orchestrator = Orchestrator(args.config, dry_run=args.dry_run)
-    success = orchestrator.run_experiment()
-    
+    try:
+        success = orchestrator.run_experiment()
+    except BrokenPipeError:
+        # stdout foi fechado por um pipe (ex.: head/sed). Sair silenciosamente.
+        success = True
+
     sys.exit(0 if success else 1)
 
 

@@ -3,12 +3,13 @@ Validador de Configuração
 Valida estrutura e valores de configuração YAML
 """
 
+import yaml
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 
 
 class ConfigValidator:
-    """Validador de configuração do proyecto"""
+    """Validador de configuração do projeto"""
     
     # Schema esperado
     REQUIRED_KEYS = {
@@ -115,8 +116,6 @@ class ConfigValidator:
         Returns:
             (config, errors)
         """
-        import yaml
-        
         errors = []
         
         # Verificar se ficheiro existe

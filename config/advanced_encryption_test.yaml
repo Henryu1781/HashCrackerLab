@@ -1,28 +1,28 @@
-# Configuração Simples - Teste Rápido
+# Configuração - Criptografia Avançada (Argon2 & Bcrypt)
 experiment:
-  name: "quick_test"
-  description: "Teste rápido com poucos hashes"
+  name: "advanced_crypto_test"
+  description: "Teste com algoritmos modernos (Argon2 e Bcrypt)"
   seed: 42
   
   hash_generation:
-    count: 10  # Apenas 10 hashes
+    count: 5  # Poucos hashes pois são lentos
     algorithms:
+      - name: "bcrypt"
+        cost: 5 # Cost baixo para ser rapido no teste
+      - name: "argon2"
+        cost: 2     # Memory cost (2 KB) - baixo para teste
+        iterations: 1
       - name: "md5"
         salt: false
       - name: "sha256"
         salt: true
     
     password_patterns:
-      - "password"
       - "123456"
+      - "password"
+      - "admin"
       - "qwerty"
       - "letmein"
-      - "monkey"
-      - "princess"
-      - "sunshine"
-      - "unknown1"
-      - "unknown2"
-      - "unknown3"
   
   cracking:
     modes:
@@ -47,5 +47,4 @@ experiment:
     export_formats: ["csv", "json"]
   
   security:
-    isolated_network: false
-    auto_cleanup: false
+    isolated_network: false # IGNORAR VERIFICAÇÃO DE REDE

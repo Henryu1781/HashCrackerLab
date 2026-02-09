@@ -44,6 +44,7 @@ sudo pacman -S --needed --noconfirm \
     base-devel \
     opencl-headers \
     ocl-icd \
+    pocl \
     clinfo
 
 echo -e "${YELLOW}[3/8] Verificando suporte GPU...${NC}"
@@ -60,6 +61,15 @@ if lspci | grep -i amd.*vga &> /dev/null; then
     echo "GPU AMD detectada"
     sudo pacman -S --needed --noconfirm opencl-mesa 2>/dev/null || \
         echo -e "${YELLOW}Aviso: Não foi possível instalar suporte AMD GPU.${NC}"
+fi
+
+# OpenCL CPU (para benchmark CPU vs GPU no hashcat)
+echo -e "${YELLOW}Verificando OpenCL CPU (POCL)...${NC}"
+if clinfo 2>/dev/null | grep -q "Device Type.*CPU"; then
+    echo -e "${GREEN}[OK] OpenCL CPU detectado (benchmark CPU disponível)${NC}"
+else
+    echo -e "${YELLOW}[WARN] OpenCL CPU não detectado. O benchmark CPU pode aparecer como n/a.${NC}"
+    echo -e "${YELLOW}       Tente reiniciar sessão ou reinstalar: sudo pacman -S pocl ocl-icd${NC}"
 fi
 
 echo -e "${YELLOW}[4/8] Instalando dependências Python...${NC}"

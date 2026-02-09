@@ -15,7 +15,7 @@ from datetime import datetime
 # Imports para algoritmos modernos
 import bcrypt
 from argon2 import PasswordHasher
-from argon2.low_level import hash_secret_raw, Type
+from argon2.low_level import hash_secret, Type
 from passlib.hash import scrypt, pbkdf2_sha256
 
 
@@ -85,7 +85,8 @@ class HashGenerator:
             iterations = algo_config.get('iterations', 3)
             salt = self._get_salt_bytes(16)
             
-            hash_bytes = hash_secret_raw(
+            # Use hash_secret to get PHC string (needed for hashcat mode 19600)
+            hash_bytes = hash_secret(
                 secret=password.encode(),
                 salt=salt,
                 time_cost=iterations,
@@ -96,7 +97,7 @@ class HashGenerator:
             )
             
             hash_data.update({
-                'hash': hash_bytes.hex(),
+                'hash': hash_bytes.decode('utf-8'),
                 'salt': salt.hex(),
                 'cost': cost,
                 'iterations': iterations,

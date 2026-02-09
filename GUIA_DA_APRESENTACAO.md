@@ -25,6 +25,10 @@ Documento único com setup, passos e falas — tudo por ordem temporal.
    ./setup_arch.sh
    ```
 3. Confirmar **sem erros** de NVIDIA/OpenCL.
+   - Para o benchmark CPU vs GPU, confirmar que existe OpenCL CPU (POCL):
+     ```bash
+     clinfo | grep -i "Device Type" | head
+     ```
 
 ### 2) Ferro (Kali)
 1. Abrir terminal na pasta do projeto.
@@ -258,6 +262,21 @@ Documento único com setup, passos e falas — tudo por ordem temporal.
 - **Henrique (confirmação):**
    > "Chave confirmada. Estamos na rede."
 - **Henrique (transição):**
+   > "Agora que temos acesso à rede, vamos mostrar duas coisas: (1) como credenciais podem vazar em protocolos inseguros e (2) por que GPU acelera cracking em hashes rápidos."
+
+### 🟠 EXTRA — Benchmark CPU vs GPU (30–60s, automático)
+**Objetivo:** mostrar números reais de throughput (sem crackear passwords reais).
+
+**O que acontece:** o `orchestrator.py` executa `hashcat -b` para CPU e para GPU, e imprime o rácio GPU/CPU em MD5/SHA-256/bcrypt.
+
+**Nota de compatibilidade:** em alguns Linux, o hashcat pode não listar *CPU OpenCL* por defeito. Nesse caso aparece `CPU=n/a` e a demo foca-se no throughput da GPU (que continua válido). Para medir CPU com hashcat, instalar um runtime OpenCL CPU (ex.: `pocl-opencl-icd`).
+
+**Falas (Henrique):**
+> "Isto não é força bruta num alvo real. É um benchmark do motor de hashing. Em hashes rápidos, a GPU é dezenas/centenas de vezes mais rápida. Em hashes lentos como bcrypt, a diferença reduz porque o algoritmo é desenhado para ser caro por tentativa."
+
+**Onde ver os ficheiros:**
+- CSV: `results/.../metrics/benchmark_cpu_gpu.csv`
+- Relatório: `results/.../REPORT.md`
    > "Avançamos para a análise de tráfego."
 
 ### 🟠 FASE 2 — Captura de Tráfego (3:00–6:00)
