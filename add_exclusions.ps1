@@ -1,12 +1,13 @@
-# Script para adicionar exclusões ao Windows Defender
-# Requer execução como Administrador
+# Script para adicionar exclusoes ao Windows Defender
+# Requer execucao como Administrador
 
 Write-Host "===============================================" -ForegroundColor Cyan
-Write-Host "Configurando Exclusões do Windows Defender" -ForegroundColor Cyan
+Write-Host "Configurando exclusoes do Windows Defender" -ForegroundColor Cyan
 Write-Host "===============================================" -ForegroundColor Cyan
 
 $paths = @(
-    "C:\Users\duart\HashCrackerLab",
+    "${env:USERPROFILE}\HashCrackerLab",
+    "${env:USERPROFILE}\HashCrackerLab\hashcrackerlab",
     "C:\hashcat",
     "C:\tools",
     "C:\aircrack-ng",
@@ -15,19 +16,19 @@ $paths = @(
 
 foreach ($path in $paths) {
     if (Test-Path $path) {
-        Write-Host "Adicionando exclusão para: $path" -ForegroundColor Yellow
+        Write-Host "Adicionando exclusao para: $path" -ForegroundColor Yellow
         try {
             Add-MpPreference -ExclusionPath $path -ErrorAction Stop
-            Write-Host "✓ Sucesso" -ForegroundColor Green
+            Write-Host "Sucesso" -ForegroundColor Green
         } catch {
-            Write-Host "✗ Erro: $_" -ForegroundColor Red
+            Write-Host "Erro: $_" -ForegroundColor Red
             Write-Host "Certifique-se de executar este script como ADMINISTRADOR." -ForegroundColor Red
         }
     } else {
-        Write-Host "Ignorando (caminho não existe): $path" -ForegroundColor DarkGray
+        Write-Host "Ignorando (caminho nao existe): $path" -ForegroundColor DarkGray
     }
 }
 
 Write-Host ""
-Write-Host "Configuração concluída." -ForegroundColor Cyan
+Write-Host "Configuracao concluida." -ForegroundColor Cyan
 pause

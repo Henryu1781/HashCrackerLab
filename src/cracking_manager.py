@@ -409,7 +409,7 @@ class CrackingManager:
             'bcrypt': 3200,
             'scrypt': 8900,
             'pbkdf2_sha256': 10900,
-            'argon2': 34000  # Argon2 (matches v7.1.2)
+            'argon2': 19600  # argon2id
         }
         
         return mapping.get(algo, 0)

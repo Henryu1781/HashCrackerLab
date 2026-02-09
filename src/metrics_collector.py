@@ -24,9 +24,6 @@ class MetricsCollector:
     def collect_metrics(self, hashes: List[Dict], 
                        cracking_results: Dict) -> Dict:
         """Coletar todas as métricas da experiência"""
-        executions = cracking_results.get('executions', [])
-        total_duration = sum((e.get('duration') or 0) for e in executions)
-
         metrics = {
             'timestamp': datetime.now().isoformat(),
             'total_hashes': len(hashes),
@@ -35,9 +32,7 @@ class MetricsCollector:
             'by_algorithm': {},
             'by_mode': {},
             'performance': {},
-            'duration': {},
-            'total_duration': total_duration,
-            'benchmarks': cracking_results.get('benchmarks')
+            'duration': {}
         }
         
         # Métricas por algoritmo
@@ -49,7 +44,7 @@ class MetricsCollector:
             }
         
         # Métricas por modo
-        for execution in executions:
+        for execution in cracking_results.get('executions', []):
             mode = execution['mode']
             if mode not in metrics['by_mode']:
                 metrics['by_mode'][mode] = {
@@ -96,32 +91,6 @@ class MetricsCollector:
         
         # Tabela resumo
         self._print_summary_table(metrics)
-
-        # CSV - Benchmark CPU vs GPU (se existir)
-        bench = metrics.get('benchmarks')
-        if bench and bench.get('enabled') and bench.get('by_mode'):
-            csv_file = self.metrics_dir / "benchmark_cpu_gpu.csv"
-            with open(csv_file, 'w', newline='') as f:
-                writer = csv.writer(f)
-                writer.writerow([
-                    'Hash Mode', 'Hash Name',
-                    'CPU Speed', 'CPU Error',
-                    'GPU Speed', 'GPU Error',
-                    'GPU/CPU Ratio'
-                ])
-
-                for mode, info in bench.get('by_mode', {}).items():
-                    name = info.get('hash_name') or ''
-                    cpu_info = info.get('cpu') or {}
-                    gpu_info = info.get('gpu') or {}
-                    cpu = cpu_info.get('speed_raw')
-                    gpu = gpu_info.get('speed_raw')
-                    cpu_err = cpu_info.get('error')
-                    gpu_err = gpu_info.get('error')
-                    ratio = info.get('ratio_gpu_over_cpu')
-                    ratio_s = f"{ratio:.2f}" if ratio else ''
-                    writer.writerow([mode, name, cpu or '', cpu_err or '', gpu or '', gpu_err or '', ratio_s])
-            self.logger.info(f"Benchmark CSV: {csv_file}")
     
     def _print_summary_table(self, metrics: Dict):
         """Imprimir tabela resumo no console"""

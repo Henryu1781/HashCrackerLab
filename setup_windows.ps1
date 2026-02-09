@@ -97,22 +97,57 @@ Write-Host "[6/9] Instalando Wireshark (inclui tshark)..." -ForegroundColor Yell
 choco install wireshark -y
 
 Write-Host "[7/9] Configurando ambiente Python..." -ForegroundColor Yellow
-# Usar --clear para garantir ambiente limpo
-python -m venv --clear venv
+
+# Encontrar o executavel Python real (evitar alias da Microsoft Store)
+$pythonExe = $null
+if (Get-Command py -ErrorAction SilentlyContinue) {
+    $pythonExe = "py"
+} else {
+    # Procurar Python instalado pelo Chocolatey ou manualmente
+    $candidates = @(
+        "$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe",
+        "C:\Python3*\python.exe",
+        "$env:ProgramFiles\Python3*\python.exe"
+    )
+    foreach ($pattern in $candidates) {
+        $found = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue | Sort-Object -Descending | Select-Object -First 1
+        if ($found) {
+            $pythonExe = $found.FullName
+            break
+        }
+    }
+}
+
+if (-not $pythonExe) {
+    Write-Host "[ERRO] Python nao encontrado. Instale Python e tente novamente." -ForegroundColor Red
+    pause
+    exit 1
+}
+
+Write-Host "Usando Python: $pythonExe" -ForegroundColor Green
+
+# Criar venv com .venv (convencao VS Code)
 try {
-    & ".\venv\Scripts\Activate.ps1" -ErrorAction Stop
+    & $pythonExe -m venv --clear .venv
+    Write-Host "Ambiente virtual .venv criado com sucesso." -ForegroundColor Green
 } catch {
-    Write-Host "Aviso: Falha ao ativar venv. Pode ativar manualmente depois." -ForegroundColor Yellow
+    Write-Host "Aviso: Falha ao criar .venv." -ForegroundColor Yellow
 }
 
 try {
-    python -m pip install --upgrade pip
+    & ".\.venv\Scripts\Activate.ps1" -ErrorAction Stop
+} catch {
+    Write-Host "Aviso: Falha ao ativar .venv. Pode ativar manualmente depois." -ForegroundColor Yellow
+}
+
+try {
+    & $pythonExe -m pip install --upgrade pip
 } catch {
     Write-Host "Aviso: Falha ao atualizar pip." -ForegroundColor Yellow
 }
 
 try {
-    pip install -r requirements.txt
+    & ".\.venv\Scripts\pip.exe" install -r requirements.txt
 } catch {
     Write-Host "Aviso: Falha ao instalar dependencias Python." -ForegroundColor Yellow
 }
@@ -150,7 +185,7 @@ Write-Host '========================================' -ForegroundColor Green
 Write-Host ''
 Write-Host 'Proximos passos:' -ForegroundColor Yellow
 Write-Host '1. Feche e reabra o PowerShell'
-Write-Host '2. Execute: .\venv\Scripts\Activate.ps1'
+Write-Host '2. Execute: .\.venv\Scripts\Activate.ps1'
 Write-Host '3. Aguarde instrucoes do orquestrador'
 Write-Host ''
 Write-Host 'Verificacao Hashcat:' -ForegroundColor Yellow

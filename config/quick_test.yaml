@@ -47,5 +47,5 @@ experiment:
     export_formats: ["csv", "json"]
   
   security:
-    isolated_network: false
+    isolated_network: true
     auto_cleanup: false

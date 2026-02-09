@@ -80,15 +80,6 @@ experiment:
       wireshark_filter: "tcp.port == 23"
       extract_hashes: true
 
-  benchmark:
-    # Benchmark seguro (hashcat -b) para comparar CPU vs GPU na apresentação
-    enabled: true
-    benchmark_time: 3
-    # 0=MD5 (rápido, GPU domina), 1400=SHA-256, 3200=bcrypt (lento, gap menor)
-    hash_modes: [0, 1400, 3200]
-    timeout: 90
-    extra_args: []
-
   system:
     # Tempos para demo
     timeout_seconds: 300

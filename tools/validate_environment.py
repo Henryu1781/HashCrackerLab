@@ -133,21 +133,11 @@ def check_gpu_support():
         output = result.stdout + result.stderr
         
         if 'CUDA' in output or 'OpenCL' in output:
-            print("[OK] Backend(s) detectados pelo Hashcat")
-
-            # Deteção simples de device CPU via OpenCL (para benchmark CPU vs GPU)
-            # Procura por linhas tipo: "Type...........: CPU"
-            if 'Type...........: CPU' in output:
-                print("[OK] OpenCL CPU device detectado (benchmark CPU disponível)")
-            else:
-                print("[WARN] Nenhum OpenCL CPU device detectado (benchmark CPU pode aparecer como n/a)")
-                if sys.platform.startswith('linux'):
-                    print("       Dica (Linux): instalar `pocl-opencl-icd` pode habilitar CPU OpenCL")
-
+            print("[OK] GPU detectada pelo Hashcat")
             return True
-
-        print("[WARN] Nenhum backend detectado (CPU/GPU indisponível)")
-        return True  # Não é crítico
+        else:
+            print("[WARN] Nenhuma GPU detectada (CPU apenas)")
+            return True  # Não é crítico
     except:
         print("[WARN] Nao foi possivel verificar GPU")
         return True
