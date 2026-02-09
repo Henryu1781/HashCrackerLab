@@ -52,7 +52,7 @@ graph TD
 
 ## 🛑 Validação
 Para confirmar que o hardware está pronto:
-1.  **No Kali:** `iwconfig` deve mostrar a interface wlan0.
-2.  **No Kali:** `sudo airmon-ng start wlan0` deve ativar o modo monitor.
+1.  **No Kali:** `iwconfig` deve mostrar a interface wlan00.
+2.  **No Kali:** `sudo airmon-ng start wlan00` deve ativar o modo monitor.
 3.  **No Windows:** Conectividade estável com o Router.
 

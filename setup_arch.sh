@@ -56,7 +56,7 @@ if lspci | grep -i nvidia &> /dev/null; then
 fi
 
 # AMD
-if lspci | grep -i amd.*vga &> /dev/null; then
+if lspci | grep -iE '(amd|radeon).*(vga|display|3d)|vga.*(amd|radeon)' &> /dev/null; then
     echo "GPU AMD detectada"
     sudo pacman -S --needed --noconfirm opencl-mesa 2>/dev/null || \
         echo -e "${YELLOW}Aviso: Não foi possível instalar suporte AMD GPU.${NC}"

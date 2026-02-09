@@ -46,7 +46,7 @@ python tools/validate_environment.py
 ```bash
 ./setup_kali.sh
 source venv/bin/activate
-sudo airmon-ng start wlan0  # Criar wlan0mon
+sudo airmon-ng start wlan00  # Criar wlan00mon
 ```
 
 **Windows (Francisco/Duarte):**
@@ -81,7 +81,7 @@ python orchestrator.py --config config/real_world.yaml
 ```bash
 python wifi_cracker.py --capture --ssid LAB-SERVERS
 # Após captura do handshake:
-python wifi_cracker.py --crack --hash hashes/wifi_sample.hc22000
+python wifi_cracker.py --crack captures/handshake_LAB-SERVERS.cap
 ```
 
 ### Tráfego Telnet (Francisco + Duarte)

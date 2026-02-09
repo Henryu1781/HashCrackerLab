@@ -138,7 +138,7 @@ hashcat -I   # Confirmar GPU NVIDIA
 cd ~/Projects/HashCrackerLab
 ./setup_kali.sh
 source venv/bin/activate
-sudo airmon-ng start wlan0   # Criar wlan0mon
+sudo airmon-ng start wlan00   # Criar wlan00mon
 ```
 
 **Francisco + Duarte (Windows):**
@@ -221,8 +221,8 @@ ping 192.168.100.1
 cd ~/Projects/HashCrackerLab
 source venv/bin/activate
 sudo airmon-ng check kill
-sudo airmon-ng start wlan0
-python wifi_cracker.py --capture --ssid LAB-SERVERS --interface wlan0mon
+sudo airmon-ng start wlan00
+python wifi_cracker.py --capture --ssid LAB-SERVERS --interface wlan00mon
 ```
 
 ```
@@ -238,13 +238,13 @@ python wifi_cracker.py --capture --ssid LAB-SERVERS --interface wlan0mon
 
 **FERRO** executa deauth (noutro terminal):
 ```bash
-python wifi_cracker.py --deauth --ssid LAB-SERVERS --interface wlan0mon
+python wifi_cracker.py --deauth --ssid LAB-SERVERS --interface wlan00mon
 ```
 
 ```
 [*] Deauth Attack
     Alvo:      AA:BB:CC:DD:EE:FF
-    Interface: wlan0mon
+    Interface: wlan00mon
     Pacotes:   5 × 3 rondas
 
   [1/3] Enviando 5 deauth packets...
@@ -527,7 +527,7 @@ sudo pacman -S opencl-nvidia   # Arch
 
 # WiFi não entra em monitor
 sudo airmon-ng check kill
-sudo airmon-ng start wlan0
+sudo airmon-ng start wlan00
 
 # Dependências Python
 pip install -r requirements.txt

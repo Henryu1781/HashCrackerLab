@@ -200,14 +200,17 @@ class Orchestrator:
             print(f"{Fore.GREEN}Duração: {duration:.2f}s{Style.RESET_ALL}")
             print(f"{Fore.GREEN}Resultados em: {self.output_dir}{Style.RESET_ALL}")
             print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}\n")
+            return True
 
         except KeyboardInterrupt:
             print(f"\n{Fore.YELLOW}[!] Interrompido pelo utilizador{Style.RESET_ALL}")
+            return False
         except Exception as e:
             self.logger.error(f"Erro fatal: {e}")
             import traceback
             self.logger.error(traceback.format_exc())
             print(f"{Fore.RED}[ERROR] Erro fatal: {e}{Style.RESET_ALL}")
+            return False
 
             
     def run_wifi_gpu_benchmark(self):
@@ -286,7 +289,7 @@ class Orchestrator:
             
             f.write("## Resumo de Resultados\n\n")
             f.write(f"- Total de hashes: {metrics.get('total_hashes', 0)}\n")
-            f.write(f"- Hashes crackeados: {metrics.get('cracked_count', 0)}\n")
+            f.write(f"- Hashes crackeados: {metrics.get('total_cracked', 0)}\n")
             f.write(f"- Taxa de sucesso: {metrics.get('success_rate', 0):.2%}\n\n")
             
             f.write("## Performance por Algoritmo\n\n")

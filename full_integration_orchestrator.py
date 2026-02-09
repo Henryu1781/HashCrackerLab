@@ -91,7 +91,7 @@ class FullIntegrationOrchestrator:
             "telnet_authenticated_traffic.py": "Telnet credential capture",
             "orchestrator.py": "Hash cracking",
             "wordlists/custom.txt": "Dictionary",
-            "config/projeto_final_ciberseguranca.yaml": "Main config"
+            "config/apresentacao_final.yaml": "Main config"
         }
         
         all_ok = True
@@ -272,7 +272,7 @@ class FullIntegrationOrchestrator:
   Ciclos: Dictionary + Rules + Brute-force + Hybrid
   GPU: RTX 3060 (460M hashes/sec)
 """)
-            config = "config/projeto_final_ciberseguranca.yaml"
+            config = "config/apresentacao_final.yaml"
         
         else:  # pentest
             print("""
@@ -282,13 +282,13 @@ class FullIntegrationOrchestrator:
   Ciclos: Todos 6 modos de ataque
   GPU: Mxima acelerao
 """)
-            config = "config/advanced_attacks.yaml"
+            config = "config/real_world.yaml"
         
         print(f"\nExecutando: orchestrator.py --config {config}")
         
         try:
             result = subprocess.run(
-                ["python", "orchestrator.py", "--config", config],
+                [sys.executable, "orchestrator.py", "--config", config],
                 capture_output=True,
                 text=True,
                 timeout=self.config["cracking_timeout"] + 60

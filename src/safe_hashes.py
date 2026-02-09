@@ -110,8 +110,11 @@ class SafeHashesManager:
                 f.write("# NUNCA COMMITAR EM GIT\n\n")
                 json.dump(password_data, f, indent=2)
         
-        # Avisar utilizador
+        # Restringir permissões (Unix only)
         import os
-        os.chmod(output_file, 0o600)  # read/write owner only
+        try:
+            os.chmod(output_file, 0o600)  # read/write owner only
+        except OSError:
+            pass  # Windows não suporta permissões Unix
         
         return len(password_data)

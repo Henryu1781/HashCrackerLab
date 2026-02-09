@@ -164,7 +164,7 @@ experiment:
 
   wifi:
     enabled: true
-    interface: "wlan0mon"
+    interface: "wlan00mon"
     target_ssid: "LAB-SERVERS"
     capture_time: 600       # 10 min timeout (realista)
 
