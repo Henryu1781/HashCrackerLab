@@ -103,7 +103,7 @@ HashCrackerLab/
 | 0:00–3:00 | Introdução + Arquitetura | Henrique | — |
 | 3:00–10:00 | WiFi WPA2 Cracking | Henrique narra | Ferro executa |
 | 10:00–17:00 | Telnet + Wireshark | Henrique narra | Francisco + Duarte |
-| 17:00–27:00 | GPU Cracking (50 hashes, CPU vs GPU) | Henrique | Henrique |
+| 17:00–27:00 | Hash Cracking (50 hashes, 5 ataques, CPU vs GPU) | Henrique | Henrique |
 | 27:00–30:00 | Conclusões + Perguntas | Henrique | — |
 
 ---
@@ -206,7 +206,7 @@ ping 192.168.100.1
 *(Mostrar diagrama de arquitetura no projetor)*
 
 **HENRIQUE:**
-> "A nossa rede isolada tem 4 máquinas. Usamos 50 passwords — 20 fracas, 15 médias e 15 fortes — para testar 4 algoritmos de hashing com complexidade crescente, desde o MD5 obsoleto até ao Argon2, vencedor do Password Hashing Competition de 2015."
+> "A nossa rede isolada tem 4 máquinas. Usamos 50 passwords — 20 fracas, 15 médias e 15 fortes — para testar 4 algoritmos de hashing com 5 modos de ataque: dicionário, dicionário com regras de mutação, brute-force, brute-force por padrão e ataque híbrido."
 
 ---
 
@@ -337,10 +337,10 @@ Packet #43  192.168.100.40 → 192.168.100.30  Telnet Data: "SecurePass123"
 
 ---
 
-## 17:00 — GPU HASH CRACKING (50 Hashes · CPU vs GPU)
+## 17:00 — HASH CRACKING (50 Hashes · 5 Ataques · CPU vs GPU)
 
 **HENRIQUE:**
-> "Agora a parte principal do nosso projeto. Vou gerar 50 hashes — 50 passwords diferentes — com 4 algoritmos: MD5, SHA-256, Bcrypt e Argon2. O nosso orquestrador vai tentar crackar todas primeiro com a GPU e depois com o CPU, para compararmos."
+> "Agora a parte principal do nosso projeto. Vou gerar 50 hashes — 50 passwords diferentes — com 4 algoritmos: MD5, SHA-256, Bcrypt e Argon2. O orquestrador vai usar **5 modos de ataque diferentes**: dicionário simples, dicionário com regras de mutação, brute-force de PINs, brute-force por padrão e ataque híbrido. Tudo primeiro com GPU, depois CPU, para compararmos."
 
 **HENRIQUE** executa:
 ```bash
@@ -362,56 +362,71 @@ python orchestrator.py --config config/apresentacao_final.yaml
 **HENRIQUE:**
 > "200 hashes no total — 50 por algoritmo. Agora o hashcat vai primeiro usar a GPU."
 
-### Fase GPU
+### Fase GPU — 5 Modos de Ataque
 
 ```
 [*] ==================================================
 [*] Dispositivo: GPU (NVIDIA OpenCL)
 [*] ==================================================
 
+── Ataque 1/5: Dicionário (rockyou-small.txt) ──
 [GPU] MD5 (mode 0): 22.5 GH/s
 [!] 123456 → 0.01s    [!] password → 0.01s    [!] qwerty → 0.02s
-... (20 fracas + ~10 médias crackeadas)
-[✓] MD5 GPU: 30/50 crackeadas — 0.3s total
+... (20 fracas + ~8 médias)
+[✓] MD5: 28/50    SHA-256: 26/50    Bcrypt: 20/50    Argon2: 16/50
 
-[GPU] SHA-256 (mode 1420): 8.2 GH/s
-... (20 fracas + ~8 médias crackeadas)
-[✓] SHA-256 GPU: 28/50 crackeadas — 1.2s total
+── Ataque 2/5: Dicionário + Regras best66.rule ──
+[*] Mutações: p→P, a→@, o→0, sufixo 123, etc.
+[✓] MD5: +4 → 32/50    SHA-256: +3 → 29/50    Bcrypt: +3 → 23/50    Argon2: +2 → 18/50
 
-[GPU] Bcrypt (mode 3200): 2.1 MH/s
-... (20 fracas crackeadas, poucas médias)
-[✓] Bcrypt GPU: 22/50 crackeadas — 18s total
+── Ataque 3/5: Brute-force PIN (?d?d?d?d) ──
+[*] Keyspace: 10.000 combinações (0000–9999)
+[+] PIN encontrado: 5239 → 0.8s
+[✓] MD5: +1 → 33/50    (restantes: sem PINs puros)
 
-[GPU] Argon2id (mode 34000): 850 H/s
-... (maioria das fracas crackeadas)
-[✓] Argon2 GPU: 18/50 crackeadas — 45s total
+── Ataque 4/5: Brute-force Padrão (?u?l?l?l?d?d) ──
+[*] Keyspace: 11.881.376 combinações (ex: Adam99, Test42)
+[✓] MD5: +0    SHA-256: +0    Bcrypt: +0    Argon2: +0
+[*] Nenhuma password nova — padrão não corresponde às restantes
+
+── Ataque 5/5: Híbrido — wordlist + ?d?d?d ──
+[*] Cada password da wordlist + 000–999 (ex: password123, admin007)
+[✓] MD5: +2 → 35/50    SHA-256: +1 → 30/50    Bcrypt: +1 → 24/50    Argon2: +1 → 19/50
+
+[*] ── RESUMO GPU (5 ataques combinados) ──
+[✓] MD5 GPU:     35/50 crackeadas — 2.1s total
+[✓] SHA-256 GPU: 30/50 crackeadas — 5.8s total
+[✓] Bcrypt GPU:  24/50 crackeadas — 22s total
+[✓] Argon2 GPU:  19/50 crackeadas — 48s total
 ```
 
 **HENRIQUE:**
-> "Reparem: MD5 — 22 bilhões por segundo, 30 crackeadas em 0.3 segundos. Argon2 — 850 por segundo, demorou 45 segundos. Agora o mesmo teste com CPU."
+> "Com 5 ataques diferentes, crackeámos 35 de 50 em MD5 — o dicionário base apanhou as fracas, as regras de mutação apanharam variações como 'summer2024' ou 'pass1234', e o híbrido apanhou as que tinham dígitos no final. Em Argon2 só crackeámos 19, e demorou 48 segundos. Agora o mesmo com CPU."
 
-### Fase CPU
+### Fase CPU — Mesmos 5 Ataques
 
 ```
 [*] ==================================================
 [*] Dispositivo: CPU
 [*] ==================================================
 
+── Ataques 1–5 em CPU (mesma sequência) ──
+
 [CPU] MD5 (mode 0): 1.4 GH/s
-[✓] MD5 CPU: 30/50 crackeadas — 4.8s total
+[✓] MD5 CPU: 35/50 crackeadas — 34s total
 
 [CPU] SHA-256 (mode 1420): 0.8 GH/s
-[✓] SHA-256 CPU: 28/50 crackeadas — 12s total
+[✓] SHA-256 CPU: 30/50 crackeadas — 72s total
 
 [CPU] Bcrypt (mode 3200): 0.4 MH/s
-[✓] Bcrypt CPU: 22/50 crackeadas — 95s total
+[✓] Bcrypt CPU: 24/50 crackeadas — timeout (>180s)
 
 [CPU] Argon2id (mode 34000): 140 H/s
-[✓] Argon2 CPU: 18/50 crackeadas — timeout
+[✓] Argon2 CPU: 19/50 crackeadas — timeout (>180s)
 ```
 
 **HENRIQUE:**
-> "Mesmas passwords crackeadas — porque é a mesma wordlist — mas vejam os tempos. O CPU é 16 vezes mais lento em MD5 e 6 vezes mais lento em Argon2. O Argon2 nem terminou dentro do tempo limite."
+> "Mesmas passwords crackeadas — porque é a mesma wordlist e os mesmos 5 ataques — mas vejam os tempos. MD5 com GPU levou 2 segundos; com CPU levou 34. O Bcrypt e Argon2 no CPU nem terminaram dentro do tempo. Isto mostra duas coisas: o poder da GPU e a importância dos algoritmos memory-hard."
 
 ### Tabela Comparativa Final
 
@@ -419,29 +434,22 @@ python orchestrator.py --config config/apresentacao_final.yaml
 ┌──────────┬───────┬───────────┬──────────────┬──────────────┬─────────┐
 │ Algoritmo│ Total │ Crackeadas│   Tempo GPU  │  Tempo CPU   │ Speedup │
 ├──────────┼───────┼───────────┼──────────────┼──────────────┼─────────┤
-│ MD5      │  50   │    30     │    0.3s      │    4.8s      │  16.5x  │
-│ SHA-256  │  50   │    28     │    1.2s      │   12.0s      │   9.9x  │
-│ Bcrypt   │  50   │    22     │   18.0s      │   95.0s      │   5.2x  │
-│ Argon2   │  50   │    18     │   45.0s      │  timeout     │   6.1x  │
+│ MD5      │  50   │    35     │    2.1s      │   34.0s      │  16.2x  │
+│ SHA-256  │  50   │    30     │    5.8s      │   72.0s      │  12.4x  │
+│ Bcrypt   │  50   │    24     │   22.0s      │  timeout     │   >8x   │
+│ Argon2   │  50   │    19     │   48.0s      │  timeout     │   >6x   │
 ├──────────┼───────┼───────────┼──────────────┼──────────────┼─────────┤
-│ TOTAL    │ 200   │    98     │   ~65s       │  >120s       │         │
+│ TOTAL    │ 200   │   108     │  ~78s        │  >300s       │         │
 └──────────┴───────┴───────────┴──────────────┴──────────────┴─────────┘
+
+Modos de ataque usados: Dicionário │ Dicionário+Regras │ Brute-force PIN │
+                        Brute-force Padrão │ Híbrido (wordlist+dígitos)
 ```
 
 **HENRIQUE:**
-> "98 de 200 — 49%. Todas as 20 passwords fracas caíram em todos os algoritmos. As 15 fortes resistiram. A grande diferença é a velocidade: MD5 com GPU testa 22 bilhões por segundo. Argon2 apenas 850. Uma password que demoraria 1 hora a crackar com MD5 demoraria 3 anos com Argon2."
+> "108 de 200 — 54%. Os 5 modos de ataque em conjunto são muito mais eficazes que só o dicionário. As regras de mutação apanharam variações como 'summer2024', o híbrido apanhou passwords com dígitos no final. Mas as 15 passwords fortes resistiram a tudo — em qualquer algoritmo."
 
-### Demo Brute-Force
-
-```
-[*] DEMO: Brute-force de PIN (0000-9999)...
-[+] PIN encontrado: 5239
-[+] Tempo: 2.1 segundos
-[+] Tentativas: 5240 de 10000
-```
-
-**HENRIQUE:**
-> "Um PIN de 4 dígitos — 10 mil combinações — cai em 2 segundos. Uma password de 12 caracteres com símbolos? São 19 septilhões de combinações. Mesmo com a GPU, demoraria séculos."
+> "A diferença de velocidade é brutal: MD5 com GPU — 2 segundos para 5 ataques. Argon2 com CPU — nem terminou. Uma password que demoraria 1 hora a crackar com MD5 demoraria 3 anos com Argon2. E um PIN de 4 dígitos — 10 mil combinações — cai em menos de 1 segundo."
 
 ---
 
@@ -454,7 +462,8 @@ python orchestrator.py --config config/apresentacao_final.yaml
 >
 > **Telnet** — Credenciais visíveis em texto claro. Proteção: usar SSH.
 >
-> **Hashes (50 passwords × 4 algoritmos):**
+> **Hashes (50 passwords × 4 algoritmos × 5 modos de ataque):**
+> - **5 ataques combinados** (dicionário, regras, brute-force, padrão, híbrido) são muito mais eficazes que dicionário sozinho — crackeámos 54% em vez de ~40%.
 > - MD5 é **16x mais rápido** na GPU — completamente inadequado para passwords.
 > - Argon2 é **26 milhões de vezes** mais lento que MD5, neutralizando a vantagem da GPU.
 > - Mas **nenhum algoritmo** salva uma password fraca — '123456' cai sempre.

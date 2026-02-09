@@ -3,13 +3,14 @@
 # ============================================================
 # Objetivo: Demonstração completa para avaliação
 # - 50 passwords × 4 algoritmos = 200 hashes
+# - 5 modos de ataque: dicionário, rules, brute-force, padrão, híbrido
 # - Comparação CPU vs GPU
 # - Rede isolada obrigatória
 # - WiFi WPA2 + Telnet + Hash Cracking
 # ============================================================
 experiment:
   name: "apresentacao_final"
-  description: "Apresentação final — 50 hashes, 4 algoritmos, CPU vs GPU, rede isolada"
+  description: "Apresentação final — 50 hashes, 4 algoritmos, 5 modos de ataque, CPU vs GPU, rede isolada"
   seed: 42
   deterministic_salts: true
 
@@ -84,10 +85,33 @@ experiment:
 
   cracking:
     modes:
+      # 1. Dicionário simples — rockyou sem mutações
       - type: "dictionary"
         wordlist: "wordlists/rockyou-small.txt"
         rules: null
         max_time: 120
+
+      # 2. Dicionário + regras de mutação (ex: P@ssw0rd → p4ssw0rd!)
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou-small.txt"
+        rules: "rules/best66.rule"
+        max_time: 180
+
+      # 3. Brute-force — PINs de 4 dígitos (0000–9999)
+      - type: "brute-force"
+        mask: "?d?d?d?d"
+        max_time: 60
+
+      # 4. Brute-force — padrão Ulll99 (maiúscula + 3 minúsculas + 2 dígitos)
+      - type: "brute-force"
+        mask: "?u?l?l?l?d?d"
+        max_time: 120
+
+      # 5. Híbrido — wordlist + 3 dígitos (ex: password123)
+      - type: "hybrid"
+        wordlist: "wordlists/rockyou-small.txt"
+        mask: "?d?d?d"
+        max_time: 180
 
     workers:
       gpu:
