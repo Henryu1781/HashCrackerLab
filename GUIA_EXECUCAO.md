@@ -319,16 +319,40 @@ wireshark --version
 
 ## Rede
 
-```
-Router: SSID LAB-SERVERS | WPA2 | Password Cibersegura
-```
+### Configurar o Router (10 min antes da apresentação)
 
-| Máquina | IP |
-|---------|-----|
-| Henrique | 192.168.100.10 |
-| Ferro | 192.168.100.20 |
-| Francisco | 192.168.100.30 |
-| Duarte | 192.168.100.40 |
+1. Ligar o router à corrente e esperar 2 minutos.
+2. Ligar cabo Ethernet do router ao PC do Henrique.
+3. No browser do Henrique abrir `192.168.0.1` (ou `192.168.1.1`).
+4. Login: `admin` / `admin` (ou ver etiqueta do router).
+5. Menu **Wireless / WiFi**:
+
+| Campo | Valor |
+|-------|-------|
+| SSID | `LAB-SERVERS` |
+| Segurança | `WPA2-PSK (AES)` |
+| Password | `Cibersegura` |
+
+6. Guardar → router reinicia (~1 min).
+7. Menu **LAN / Network**:
+
+| Campo | Valor |
+|-------|-------|
+| Gateway IP | `192.168.100.1` |
+| Máscara | `255.255.255.0` |
+
+8. Guardar → router reinicia → entrar em `http://192.168.100.1`.
+9. Menu **DHCP**: confirmar ON, range `192.168.100.100` – `192.168.100.200`.
+10. Guardar.
+
+### Conectar Todos à Rede
+
+| Máquina | IP | Como |
+|---------|-----|------|
+| Henrique | 192.168.100.10 | Cabo Ethernet |
+| Ferro | 192.168.100.20 | WiFi `LAB-SERVERS` |
+| Francisco | 192.168.100.30 | WiFi `LAB-SERVERS` |
+| Duarte | 192.168.100.40 | WiFi `LAB-SERVERS` |
 
 **IPs fixos (se necessário):**
 ```bash
@@ -338,6 +362,8 @@ nmtui
 # Windows (PowerShell Admin)
 New-NetIPAddress -InterfaceAlias "Ethernet" -IPAddress 192.168.100.30 -PrefixLength 24 -DefaultGateway 192.168.100.1
 ```
+
+**Testar:** `ping 192.168.100.1` em todas as máquinas
 
 **Teste:** `ping 192.168.100.1`
 
