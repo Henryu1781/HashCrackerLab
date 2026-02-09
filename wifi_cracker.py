@@ -37,23 +37,19 @@ class WiFiCracker:
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
     def check_monitor_mode(self) -> bool:
-        """Verifica se interface está em modo monitor"""
-        try:
-            result = subprocess.run(
-                ["iw", "dev", self.monitor_iface, "info"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            if result.returncode != 0:
-                print(f"[!] Interface {self.monitor_iface} não encontrada!")
-                return False
-            return "monitor" in result.stdout.lower()
-        except FileNotFoundError:
-            print("[!] iw não encontrado. Instalar: sudo apt install iw")
-            return False
-        except Exception:
+        """Verifica se interface está em modo monitor via /sys/class/net"""
+        iface_path = Path(f"/sys/class/net/{self.monitor_iface}")
+        
+        if not iface_path.exists():
             print(f"[!] Interface {self.monitor_iface} não encontrada!")
+            return False
+        
+        try:
+            # type 803 = monitor mode
+            iface_type = (iface_path / "type").read_text().strip()
+            return iface_type == "803"
+        except Exception:
+            print(f"[!] Não foi possível verificar {self.monitor_iface}")
             return False
     
     def scan_networks(self, timeout: int = 30) -> List[Dict]:
