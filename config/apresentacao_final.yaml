@@ -1,13 +1,18 @@
 # ============================================================
-# Configuração Final — Apresentação Cibersegurança
-# 50 hashes × 4 algoritmos = comparação CPU vs GPU
+# apresentacao_final.yaml — Apresentação Completa (30 min)
+# ============================================================
+# Objetivo: Demonstração completa para avaliação
+# - 50 passwords × 4 algoritmos = 200 hashes
+# - Comparação CPU vs GPU
+# - Rede isolada obrigatória
+# - WiFi WPA2 + Telnet + Hash Cracking
 # ============================================================
 experiment:
   name: "apresentacao_final"
-  description: "50 hashes com 4 algoritmos para comparar CPU vs GPU"
+  description: "Apresentação final — 50 hashes, 4 algoritmos, CPU vs GPU, rede isolada"
   seed: 42
   deterministic_salts: true
-  
+
   hash_generation:
     count: 50
     algorithms:
@@ -16,14 +21,14 @@ experiment:
       - name: "sha256"
         salt: true
       - name: "bcrypt"
-        cost: 5       # Cost baixo para demo (~0.05s/hash)
+        cost: 5           # Cost baixo para demo (~0.05s/hash)
       - name: "argon2"
-        cost: 2        # Memory 2 KB — baixo para demo
+        cost: 2            # 2 KB — baixo para demo viável
         iterations: 1
-    
-    # 50 passwords: mix de fracas (caem) e fortes (resistem)
+
+    # 50 passwords: 20 fracas + 15 médias + 15 fortes
     password_patterns:
-      # Top 20 — passwords mais comuns (devem ser crackeadas)
+      # --- Top 20 — passwords comuns (devem ser crackeadas) ---
       - "123456"
       - "password"
       - "qwerty"
@@ -44,7 +49,7 @@ experiment:
       - "access"
       - "hello"
       - "charlie"
-      # 15 passwords médias (algumas caem, outras não)
+      # --- 15 médias (algumas caem, outras não) ---
       - "summer2024"
       - "welcome1"
       - "pass1234"
@@ -60,7 +65,7 @@ experiment:
       - "ginger23"
       - "killer99"
       - "george55"
-      # 15 passwords fortes (devem resistir à wordlist)
+      # --- 15 fortes (devem resistir à wordlist) ---
       - "X7k#mP9$vL2@"
       - "Qw3rTy!@#456"
       - "B1n4ry_St0rm!"
@@ -76,31 +81,34 @@ experiment:
       - "Pr0t0c0l_SSH!"
       - "R00t_Acc3ss_X"
       - "V4uLt_K3y_2026"
-  
+
   cracking:
     modes:
       - type: "dictionary"
         wordlist: "wordlists/rockyou-small.txt"
         rules: null
         max_time: 120
-    
+
     workers:
       gpu:
         enabled: true
         host: "localhost"
       cpu:
-        enabled: true
+        enabled: true     # CPU + GPU para comparação
         host: "localhost"
-  
+
   wifi:
-    enabled: false
-  
+    enabled: true
+    interface: "wlan0mon"
+    target_ssid: "LAB-SERVERS"
+    capture_time: 120
+
   output:
     base_dir: "results/{experiment_name}_{timestamp}"
     logs: true
     metrics: true
     export_formats: ["csv", "json"]
-  
+
   security:
-    isolated_network: false
+    isolated_network: true    # Rede isolada obrigatória
     auto_cleanup: false

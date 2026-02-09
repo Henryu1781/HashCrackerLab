@@ -64,10 +64,18 @@ wireshark --version  # Validar Wireshark
 ```bash
 cd ~/Projects/HashCrackerLab
 source venv/bin/activate
+
+# Teste rápido (<30s) — verificar erros
+python orchestrator.py --config config/quick_test.yaml
+
+# Apresentação final (50 hashes, CPU vs GPU)
 python orchestrator.py --config config/apresentacao_final.yaml
+
+# Mundo real (100 hashes, múltiplos ataques)
+python orchestrator.py --config config/real_world.yaml
 ```
 
-**Output esperado:** 200 hashes (50×4 algoritmos) → ~98 crackeadas (49%) com comparação CPU vs GPU
+**Output esperado (apresentação):** 200 hashes (50×4 algoritmos) → ~98 crackeadas (49%) com comparação CPU vs GPU
 
 ### WiFi Cracking (Ferro)
 ```bash

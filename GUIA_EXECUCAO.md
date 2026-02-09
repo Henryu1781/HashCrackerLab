@@ -1,6 +1,6 @@
 # 🎓 GUIA DA APRESENTAÇÃO — Projeto Final de Cibersegurança
 
-**Unidade Curricular:** Cibersegurança
+**Unidade Curricular:** Projeto Final
 **Grupo:** Henrique · Ferro · Francisco · Duarte
 **Duração:** 30 minutos
 **Data:** Fevereiro 2026
@@ -50,7 +50,9 @@ HashCrackerLab/
 ├── wifi_cracker.py           ← Captura e cracking WPA2
 ├── telnet_authenticated_traffic.py  ← Servidor/cliente Telnet
 ├── config/
-│   └── apresentacao_final.yaml     ← 50 hashes, 4 algoritmos, CPU+GPU
+│   ├── quick_test.yaml          ← Teste rápido (<30s, verificar erros)
+│   ├── apresentacao_final.yaml  ← Apresentação (50 hashes, CPU+GPU, rede isolada)
+│   └── real_world.yaml          ← Mundo real (100 hashes, 5 ataques, costs reais)
 ├── src/
 │   ├── hash_generator.py     ← Gera hashes (MD5, SHA-256, Bcrypt, Argon2)
 │   ├── cracking_manager.py   ← Executa hashcat (CPU vs GPU via -D flag)
@@ -458,11 +460,14 @@ python orchestrator.py --config config/apresentacao_final.yaml
 ## Configs Disponíveis
 
 ```bash
-# Apresentação final (50 hashes, CPU vs GPU) — RECOMENDADO
+# 1. Teste rápido (<30s) — verificar que tudo funciona
+python orchestrator.py --config config/quick_test.yaml
+
+# 2. Apresentação final (50 hashes, CPU vs GPU) — DIA DA APRESENTAÇÃO
 python orchestrator.py --config config/apresentacao_final.yaml
 
-# Teste rápido (5 hashes, só GPU)
-python orchestrator.py --config config/quick_test.yaml
+# 3. Mundo real (100 hashes, 5 modos de ataque, costs reais)
+python orchestrator.py --config config/real_world.yaml
 
 # Dry-run (sem cracking, só validação)
 python orchestrator.py --config config/apresentacao_final.yaml --dry-run

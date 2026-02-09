@@ -1,51 +1,56 @@
-# Configuração Simples - Teste Rápido
+# ============================================================
+# quick_test.yaml — Verificação rápida de erros
+# ============================================================
+# Objetivo: Correr em <30 segundos para validar que tudo funciona
+# Usar ANTES da apresentação para garantir zero erros
+# ============================================================
 experiment:
   name: "quick_test"
-  description: "Teste rápido com poucos hashes"
+  description: "Teste rápido — validar ambiente, dependências e pipeline"
   seed: 42
-  
+  deterministic_salts: true
+
   hash_generation:
-    count: 10  # Apenas 10 hashes
+    count: 3
     algorithms:
       - name: "md5"
         salt: false
       - name: "sha256"
         salt: true
-    
+      - name: "bcrypt"
+        cost: 4          # Mínimo possível — velocidade máxima
+      - name: "argon2"
+        cost: 1           # 1 KB — mínimo para teste
+        iterations: 1
+
     password_patterns:
       - "password"
       - "123456"
-      - "qwerty"
-      - "letmein"
-      - "monkey"
-      - "princess"
-      - "sunshine"
-      - "unknown1"
-      - "unknown2"
-      - "unknown3"
-  
+      - "admin"
+
   cracking:
     modes:
       - type: "dictionary"
         wordlist: "wordlists/rockyou-small.txt"
         rules: null
-    
+        max_time: 30
+
     workers:
       gpu:
         enabled: true
         host: "localhost"
       cpu:
-        enabled: false
-  
+        enabled: false    # Só GPU — mais rápido
+
   wifi:
     enabled: false
-  
+
   output:
     base_dir: "results/{experiment_name}_{timestamp}"
     logs: true
     metrics: true
-    export_formats: ["csv", "json"]
-  
+    export_formats: ["json"]
+
   security:
-    isolated_network: true
+    isolated_network: false   # Não exigir rede isolada
     auto_cleanup: false

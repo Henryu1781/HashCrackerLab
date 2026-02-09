@@ -1,0 +1,180 @@
+# ============================================================
+# real_world.yaml — Cenário Mundo Real (Pentest / Auditoria)
+# ============================================================
+# Objetivo: Simulação realista de auditoria de segurança
+# - Parâmetros de produção (costs reais)
+# - Múltiplos modos de ataque (dicionário, rules, brute-force, híbrido)
+# - Wordlists maiores, timeouts longos
+# - Logging completo, encriptação de resultados
+# ============================================================
+experiment:
+  name: "real_world_audit"
+  description: "Auditoria de segurança — parâmetros reais, múltiplos ataques, logging completo"
+  seed: null              # Sem seed — salts aleatórios reais
+  deterministic_salts: false
+
+  hash_generation:
+    count: 100
+    algorithms:
+      - name: "md5"
+        salt: false
+      - name: "sha256"
+        salt: true
+      - name: "bcrypt"
+        cost: 12          # Cost real de produção
+      - name: "argon2"
+        cost: 64           # 64 MB — valor recomendado OWASP
+        iterations: 3
+
+    # 100 passwords: mix realista de complexidade
+    password_patterns:
+      # Passwords comuns (existem em qualquer leak)
+      - "123456"
+      - "password"
+      - "qwerty"
+      - "letmein"
+      - "iloveyou"
+      - "admin"
+      - "monkey"
+      - "dragon"
+      - "master"
+      - "abc123"
+      - "football"
+      - "shadow"
+      - "michael"
+      - "princess"
+      - "sunshine"
+      - "trustno1"
+      - "batman"
+      - "access"
+      - "hello"
+      - "charlie"
+      # Passwords com padrões previsíveis
+      - "Summer2024!"
+      - "Welcome123"
+      - "Password1!"
+      - "Company2026"
+      - "January01"
+      - "Qwerty123!"
+      - "Admin@2026"
+      - "P@ssw0rd99"
+      - "Secret123!"
+      - "Manager01"
+      - "Login2026!"
+      - "Test1234"
+      - "User@2026"
+      - "Secure99!"
+      - "Desktop01"
+      - "Network2026"
+      - "Server123!"
+      - "Database01"
+      - "Backup2026"
+      - "Mobile123"
+      # Passwords razoáveis
+      - "soccer22"
+      - "ashley99"
+      - "jessica01"
+      - "daniel77"
+      - "nicole88"
+      - "hunter42"
+      - "mustang1"
+      - "freedom1"
+      - "thunder9"
+      - "ginger23"
+      - "killer99"
+      - "george55"
+      - "cookie12"
+      - "pepper77"
+      - "matrix42"
+      - "spartan9"
+      - "ranger33"
+      - "wizard88"
+      - "cactus11"
+      - "zenith99"
+      # Passwords moderadamente fortes
+      - "Tr0ub4dor&3"
+      - "correct-horse"
+      - "staple-battery"
+      - "Blu3_Sky_2026"
+      - "R3d_F0x_Runs!"
+      - "C0ff33_M0rning"
+      - "Gr33n_T34_Cup"
+      - "D4rk_N1ght_99"
+      - "Br1ght_St4r_7"
+      - "S1lv3r_M00n_X"
+      # Passwords fortes (devem resistir)
+      - "X7k#mP9$vL2@qR"
+      - "Qw3rTy!@#456zX"
+      - "B1n4ry_St0rm!99"
+      - "N3tw0rk$ecure#7"
+      - "H4shCr4ck3r!!xZ"
+      - "P@55w0rd_T35t#A"
+      - "Cyb3r_D3f3ns3!Q"
+      - "F1r3w4ll#2026_X"
+      - "S3cur1ty_L4b!77"
+      - "3ncrypt10n_K3y#"
+      - "Z3r0_D4y_Att4ck!"
+      - "Pr0t0c0l_SSH!99"
+      - "R00t_Acc3ss_X#7"
+      - "V4uLt_K3y_2026!"
+      - "kJ8$nM2#pQ5@wR9"
+      - "xT4!bY7&cL0*dZ3"
+      - "mH6#qW9$rJ2@vN5"
+      - "aP3!fK8&gU1*hX4"
+      - "sE7#tB0$uD3@wI6"
+      - "yC5!zA2&xF9*jL8"
+
+  cracking:
+    modes:
+      # 1. Dicionário simples
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou-small.txt"
+        rules: null
+        max_time: 300
+
+      # 2. Dicionário + regras de mutação
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou-small.txt"
+        rules: "rules/best66.rule"
+        max_time: 600
+
+      # 3. Brute-force — PINs de 6 dígitos
+      - type: "brute-force"
+        mask: "?d?d?d?d?d?d"
+        max_time: 120
+
+      # 4. Brute-force — padrão Ulll99 (maiúscula + 3 minúsculas + 2 dígitos)
+      - type: "brute-force"
+        mask: "?u?l?l?l?d?d"
+        max_time: 300
+
+      # 5. Híbrido — wordlist + 3 dígitos (ex: password123)
+      - type: "hybrid"
+        wordlist: "wordlists/rockyou-small.txt"
+        mask: "?d?d?d"
+        max_time: 600
+
+    workers:
+      gpu:
+        enabled: true
+        host: "localhost"
+      cpu:
+        enabled: true     # CPU + GPU para comparação completa
+        host: "localhost"
+
+  wifi:
+    enabled: true
+    interface: "wlan0mon"
+    target_ssid: "LAB-SERVERS"
+    capture_time: 600       # 10 min timeout (realista)
+
+  output:
+    base_dir: "results/{experiment_name}_{timestamp}"
+    logs: true
+    metrics: true
+    export_formats: ["csv", "json"]
+
+  security:
+    isolated_network: true
+    auto_cleanup: true
+    cleanup_delay: 3600     # Limpar 1h após conclusão
