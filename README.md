@@ -17,10 +17,9 @@
 
 ## 📚 Documentação
 
-| Documento | Para Quê | Quando Usar |
-|-----------|----------|-------------|
-| **[GUIA_EXECUCAO.md](GUIA_EXECUCAO.md)** | Executar demo técnica | Setup + testes |
-| **[GUIA_APRESENTACAO.md](GUIA_APRESENTACAO.md)** | Apresentação de 30min | Sala de aula |
+| Documento | Para Quê |
+|-----------|----------|
+| **[GUIA_EXECUCAO.md](GUIA_EXECUCAO.md)** | Apresentação 30min + Setup técnico |
 
 ---
 
