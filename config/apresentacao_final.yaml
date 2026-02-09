@@ -2,7 +2,7 @@
 # apresentacao_final.yaml — Apresentação Completa (30 min)
 # ============================================================
 # Objetivo: Demonstração completa para avaliação
-# - 50 passwords × 4 algoritmos = 200 hashes
+# - 15 passwords × 4 algoritmos = 60 hashes
 # - 5 modos de ataque: dicionário, rules, brute-force, padrão, híbrido
 # - Comparação CPU vs GPU
 # - Rede isolada obrigatória
@@ -10,12 +10,12 @@
 # ============================================================
 experiment:
   name: "apresentacao_final"
-  description: "Apresentação final — 50 hashes, 4 algoritmos, 5 modos de ataque, CPU vs GPU, rede isolada"
+  description: "Apresentação final — 15 passwords, 4 algoritmos, 5 modos de ataque, CPU vs GPU, rede isolada"
   seed: 42
   deterministic_salts: true
 
   hash_generation:
-    count: 50
+    count: 15
     algorithms:
       - name: "md5"
         salt: false
@@ -27,60 +27,25 @@ experiment:
         cost: 2            # 2 KB — baixo para demo viável
         iterations: 1
 
-    # 50 passwords: 20 fracas + 15 médias + 15 fortes
+    # 15 passwords: 5 fracas + 5 médias + 5 fortes
     password_patterns:
-      # --- Top 20 — passwords comuns (devem ser crackeadas) ---
+      # --- 5 fracas — passwords comuns (devem ser crackeadas) ---
       - "123456"
       - "password"
       - "qwerty"
-      - "letmein"
-      - "iloveyou"
       - "admin"
-      - "monkey"
-      - "dragon"
-      - "master"
-      - "abc123"
-      - "football"
-      - "shadow"
-      - "michael"
-      - "princess"
-      - "sunshine"
-      - "trustno1"
-      - "batman"
-      - "access"
-      - "hello"
-      - "charlie"
-      # --- 15 médias (algumas caem, outras não) ---
+      - "iloveyou"
+      # --- 5 médias (algumas caem, outras não) ---
       - "summer2024"
       - "welcome1"
       - "pass1234"
-      - "soccer22"
-      - "ashley99"
-      - "jessica01"
-      - "daniel77"
-      - "nicole88"
       - "hunter42"
-      - "mustang1"
-      - "freedom1"
-      - "thunder9"
-      - "ginger23"
-      - "killer99"
-      - "george55"
-      # --- 15 fortes (devem resistir à wordlist) ---
+      - "soccer22"
+      # --- 5 fortes (devem resistir à wordlist) ---
       - "X7k#mP9$vL2@"
-      - "Qw3rTy!@#456"
       - "B1n4ry_St0rm!"
-      - "Cr¥pt0_L4b_99"
       - "N3tw0rk$ecure"
-      - "H4shCr4ck3r!!"
-      - "P@55w0rd_T35t"
-      - "Cyb3r_D3f3ns3"
       - "F1r3w4ll#2026"
-      - "S3cur1ty_L4b!"
-      - "3ncrypt10n_K3y"
-      - "Z3r0_D4y_Att4ck"
-      - "Pr0t0c0l_SSH!"
-      - "R00t_Acc3ss_X"
       - "V4uLt_K3y_2026"
 
   cracking:
