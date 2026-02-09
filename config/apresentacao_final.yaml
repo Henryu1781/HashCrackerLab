@@ -85,17 +85,17 @@ experiment:
 
   cracking:
     modes:
-      # 1. Dicionário simples — rockyou sem mutações
+      # 1. Dicionário simples — rockyou completa (14.3M passwords)
       - type: "dictionary"
-        wordlist: "wordlists/rockyou-small.txt"
+        wordlist: "wordlists/rockyou.txt"
         rules: null
-        max_time: 120
+        max_time: 180
 
       # 2. Dicionário + regras de mutação (ex: P@ssw0rd → p4ssw0rd!)
       - type: "dictionary"
-        wordlist: "wordlists/rockyou-small.txt"
+        wordlist: "wordlists/rockyou.txt"
         rules: "rules/best66.rule"
-        max_time: 180
+        max_time: 300
 
       # 3. Brute-force — PINs de 4 dígitos (0000–9999)
       - type: "brute-force"
@@ -109,9 +109,9 @@ experiment:
 
       # 5. Híbrido — wordlist + 3 dígitos (ex: password123)
       - type: "hybrid"
-        wordlist: "wordlists/rockyou-small.txt"
+        wordlist: "wordlists/rockyou.txt"
         mask: "?d?d?d"
-        max_time: 180
+        max_time: 300
 
     workers:
       gpu:

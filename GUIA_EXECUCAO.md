@@ -60,7 +60,8 @@ HashCrackerLab/
 │   ├── network_manager.py    ← Verificação de rede isolada
 │   └── cleanup_manager.py    ← Limpeza segura de dados
 ├── wordlists/
-│   └── rockyou-small.txt     ← 10.000 passwords (subset do RockYou)
+│   ├── rockyou.txt           ← 14.3M passwords (RockYou completa)
+│   └── rockyou-small.txt     ← 10.000 passwords (quick test)
 └── results/                  ← Relatórios gerados automaticamente
 ```
 
@@ -369,7 +370,7 @@ python orchestrator.py --config config/apresentacao_final.yaml
 [*] Dispositivo: GPU (NVIDIA OpenCL)
 [*] ==================================================
 
-── Ataque 1/5: Dicionário (rockyou-small.txt) ──
+── Ataque 1/5: Dicionário (rockyou.txt — 14.3M passwords) ──
 [GPU] MD5 (mode 0): 22.5 GH/s
 [!] 123456 → 0.01s    [!] password → 0.01s    [!] qwerty → 0.02s
 ... (20 fracas + ~8 médias)

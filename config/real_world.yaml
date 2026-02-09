@@ -128,13 +128,13 @@ experiment:
     modes:
       # 1. Dicionário simples
       - type: "dictionary"
-        wordlist: "wordlists/rockyou-small.txt"
+        wordlist: "wordlists/rockyou.txt"
         rules: null
         max_time: 300
 
       # 2. Dicionário + regras de mutação
       - type: "dictionary"
-        wordlist: "wordlists/rockyou-small.txt"
+        wordlist: "wordlists/rockyou.txt"
         rules: "rules/best66.rule"
         max_time: 600
 
@@ -150,7 +150,7 @@ experiment:
 
       # 5. Híbrido — wordlist + 3 dígitos (ex: password123)
       - type: "hybrid"
-        wordlist: "wordlists/rockyou-small.txt"
+        wordlist: "wordlists/rockyou.txt"
         mask: "?d?d?d"
         max_time: 600
 
