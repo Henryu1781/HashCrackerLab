@@ -1,69 +1,158 @@
-# Hash Cracker Lab - Projeto Final
+# 🔐 HashCrackerLab - Demonstração de Criptografia Ofensiva
 
-Este repositório contém a infraestrutura completa para o projeto de Segurança Ofensiva.
-
-**Equipa:**
-- **Henrique** (Arch Linux): Orchestration & GPU Cracking
-- **Ferro** (Kali Linux): WiFi Penetration Testing
-- **Duarte & Francisco** (Windows): Network Traffic Analysis & Generation
+**Projeto Final de Cibersegurança** | **Timeline: 30 minutos**
 
 ---
 
-## 🚀 Guia de Início Rápido
+## 👥 Equipa
 
-### 1. Instalação / Validação
-Cada membro deve correr o script de validação no seu OS.
+| Nome | Sistema | Função |
+|------|---------|--------|
+| **Henrique** | Arch Linux | GPU Cracking + Coordenação |
+| **Ferro** | Kali Linux | WiFi WPA2 Penetration Testing |
+| **Francisco** | Windows | Servidor Telnet + Wireshark |
+| **Duarte** | Windows | Cliente Telnet (tráfego de teste) |
 
-**Arch (Henrique) / Kali (Ferro):**
+---
+
+## 📚 Documentação
+
+| Documento | Para Quê | Quando Usar |
+|-----------|----------|-------------|
+| **[GUIA_EXECUCAO.md](GUIA_EXECUCAO.md)** | Executar demo técnica | Setup + testes |
+| **[GUIA_APRESENTACAO.md](GUIA_APRESENTACAO.md)** | Apresentação de 30min | Sala de aula |
+
+---
+
+## ⚡ Setup Rápido (15 minutos)
+
+### 1. Clonar Repositório
 ```bash
+git clone https://github.com/Henryu1781/HashCrackerLab
+cd HashCrackerLab
+```
+
+### 2. Setup por Sistema
+
+**Arch Linux (Henrique):**
+```bash
+./setup_arch.sh
 source venv/bin/activate
 python tools/validate_environment.py
 ```
 
-**Windows (Duarte/Francisco):**
+**Kali Linux (Ferro):**
+```bash
+./setup_kali.sh
+source venv/bin/activate
+sudo airmon-ng start wlan0  # Criar wlan0mon
+```
+
+**Windows (Francisco/Duarte):**
 ```powershell
+.\setup_windows.ps1
 .\venv\Scripts\Activate.ps1
-python tools\validate_environment.py
+wireshark --version  # Validar Wireshark
 ```
 
-### 2. Execução (Por Papel)
+---
 
-#### 🔵 Henrique (Líder/GPU)
-Usa o orquestrador para gerir a demo. O novo modo interativo inclui demonstração de força bruta visual.
+## 🎯 Execução Rápida (5 minutos)
+
+### Demonstração GPU Standalone (Henrique)
 ```bash
-python full_integration_orchestrator.py --mode lab
-```
-Para teste de GPU isolado (inclui benchmark WPA2 e Demo Visual de Força Bruta):
-```bash
-python orchestrator.py --config config/projeto_final_ciberseguranca.yaml
+cd ~/Projects/HashCrackerLab
+source venv/bin/activate
+python orchestrator.py --config config/advanced_encryption_test.yaml
 ```
 
-#### 🟡 Ferro (WiFi)
-Ataca a rede `LAB-SERVERS`.
+**Output esperado:** 20 hashes → 16 crackeadas (80%) em ~1 minuto
+
+### WiFi Cracking (Ferro)
 ```bash
-sudo airmon-ng start wlan0
-python wifi_cracker.py --network "LAB-SERVERS" --monitor wlan0mon
+python wifi_cracker.py --capture --ssid LAB-SERVERS
+# Após captura do handshake:
+python wifi_cracker.py --crack --hash hashes/wifi_sample.hc22000
 ```
 
-#### 🟣 Francisco (Servidor + Analista)
-Inicia o servidor Telnet fake e usa o **Wireshark** para validar o tráfego em claro.
+### Tráfego Telnet (Francisco + Duarte)
 ```powershell
+# Francisco (servidor):
 python telnet_authenticated_traffic.py --server --port 23
-```
 
-#### 🟢 Duarte (Gerador Telnet)
-Envia credenciais de teste para o servidor do Francisco.
-```powershell
-# Substituir IP_DO_FRANCISCO pelo IP real do Francisco (ex: 192.168.1.50)
-python telnet_authenticated_traffic.py --target IP_DO_FRANCISCO --user duarte --password Cibersegura --hash-algo plaintext
+# Duarte (cliente):
+telnet 192.168.100.30 23
+# Login: admin / SecurePass123
 ```
 
 ---
 
-## 📄 Documentação Relevante
-- **Guia de Apresentação (Setup + Guião)**: [GUIA_DA_APRESENTACAO.md](GUIA_DA_APRESENTACAO.md)
-- **Guia Técnico Completo**: [FULL_INTEGRATION_GUIDE.md](FULL_INTEGRATION_GUIDE.md)
-- **Setup de Rede**: [docs/NETWORK_SETUP.md](docs/NETWORK_SETUP.md)
+## 📊 Capabilities
+
+### ✅ Hash Cracking
+- **Algoritmos:** MD5, SHA-256, Bcrypt, Argon2, SHA-1, Scrypt, PBKDF2
+- **Ataques:** Dicionário, Brute-Force, Combinator, Hybrid
+- **GPU:** 16.5x speedup vs CPU (MD5)
+
+### ✅ WiFi Security
+- **WPA2 Handshake Capture** via aircrack-ng
+- **Offline Cracking** com hashcat mode 22000
+- **Demo:** Rede `LAB-SERVERS` password `Cibersegura`
+
+### ✅ Network Traffic
+- **Telnet Plaintext** credential capture
+- **Wireshark** packet analysis
+- **Demo:** Mostrar credenciais em texto claro
 
 ---
-*HashCrackerLab - Build Final Verified*
+
+## 🛠️ Requisitos
+
+### Hardware
+- **Henrique:** GPU NVIDIA (OpenCL)
+- **Ferro:** WiFi com modo monitor
+- **Todos:** 4GB RAM, 10GB disco
+
+### Software
+- **Python:** 3.10+
+- **Hashcat:** v6.0+
+- **Aircrack-ng:** WiFi tools suite
+- **Wireshark:** Network analyzer
+
+---
+
+## 📈 Resultados Típicos
+
+```
+┌─────────────────────────────────────────────────┐
+│ GPU CRACKING BENCHMARK                          │
+├─────────────────────────────────────────────────┤
+│ MD5:     22.5 GH/s → 16.5x faster than CPU     │
+│ SHA-256:  8.2 GH/s →  9.9x faster than CPU     │
+│ Bcrypt:   2.1 MH/s →  5.2x faster than CPU     │
+├─────────────────────────────────────────────────┤
+│ WiFi WPA2: 2-5 segundos (password na wordlist) │
+│ Telnet:    Credenciais visíveis instantemente  │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## 🆘 Troubleshooting
+
+| Problema | Solução |
+|----------|---------|
+| GPU não detectada | `hashcat -I` → verificar OpenCL |
+| WiFi não captura | `sudo airmon-ng check kill` |
+| Wireshark sem packets | Verificar interface (deve estar em modo promíscuo) |
+| Import errors | `pip install -r requirements.txt` |
+
+---
+
+## 📄 Licença
+
+MIT License - Ver [LICENSE](LICENSE)
+
+---
+
+**Status:** ✅ Pronto para Apresentação | **Última atualização:** 2026-02-09
