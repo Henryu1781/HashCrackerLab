@@ -68,19 +68,22 @@ class WiFiCracker:
         """Escaneia redes WiFi disponíveis"""
         print(f"[*] Escaneando redes por {timeout}seg...")
         
-        capture_file = f"{self.output_dir}/scan_{self.timestamp}.cap"
+        capture_file = f"{self.output_dir}/scan_{self.timestamp}"
         
         try:
-            # Executar airodump-ng
+            # Executar airodump-ng com output CSV
             process = subprocess.Popen(
-                ["sudo", "airodump-ng", "-w", capture_file, self.monitor_iface],
+                ["sudo", "airodump-ng", "--output-format", "csv", "-w", capture_file, self.monitor_iface],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
             
             time.sleep(timeout)
             process.terminate()
-            process.wait(timeout=5)
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
             
             # Parse resultados
             csv_file = f"{capture_file}-01.csv"
@@ -98,27 +101,32 @@ class WiFiCracker:
             with open(csv_file, 'r', encoding='utf-8', errors='ignore') as f:
                 in_network_section = False
                 for line in f:
-                    if "BSSID, First seen" in line:
+                    if "BSSID" in line and "First" in line:
                         in_network_section = True
                         continue
-                    if in_network_section and line.strip() and "Station MAC" not in line:
+                    if "Station MAC" in line:
+                        break  # Secção de clientes, parar
+                    if in_network_section and line.strip():
                         parts = [p.strip() for p in line.split(',')]
-                        if len(parts) >= 14 and parts[0]:
+                        if len(parts) >= 14 and parts[0] and ':' in parts[0]:
+                            # ESSID é o último campo (pode ter vírgulas no nome)
+                            essid = ','.join(parts[13:]).strip()
                             networks.append({
-                                'bssid': parts[0],
-                                'power': parts[1],
-                                'beacons': parts[2],
-                                'data': parts[3],
-                                'pwr': parts[4],
-                                'packets': parts[5],
-                                'handshake': parts[6],
-                                'security': parts[7],
-                                'cipher': parts[8],
-                                'auth': parts[9],
-                                'essid': parts[13]
+                                'bssid': parts[0].strip(),
+                                'power': parts[8].strip(),
+                                'beacons': parts[9].strip(),
+                                'data': parts[10].strip(),
+                                'security': parts[5].strip(),
+                                'cipher': parts[6].strip(),
+                                'auth': parts[7].strip(),
+                                'essid': essid
                             })
+            if networks:
+                print(f"[+] {len(networks)} redes encontradas")
+                for net in networks:
+                    print(f"    {net['essid']:24} | {net['bssid']} | {net['security']}")
         except FileNotFoundError:
-            pass
+            print(f"[!] Ficheiro CSV não encontrado: {csv_file}")
         
         return networks
     
@@ -347,7 +355,7 @@ def main():
                 print("[!] Especifica --bssid ou --network para deauth")
                 sys.exit(1)
             print("[*] Escaneando para encontrar BSSID...")
-            networks = cracker.scan_networks(timeout=15)
+            networks = cracker.scan_networks(timeout=20)
             target = next((n for n in networks if args.network.lower() in n['essid'].lower()), None)
             if not target:
                 print(f"[!] Rede '{args.network}' não encontrada")
@@ -367,7 +375,7 @@ def main():
             print("[!] Especifica --network ou --ssid")
             sys.exit(1)
 
-        networks = cracker.scan_networks(timeout=15)
+        networks = cracker.scan_networks(timeout=20)
         target = _find_network(networks, args)
         if not target:
             sys.exit(1)
