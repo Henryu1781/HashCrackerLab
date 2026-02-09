@@ -16,51 +16,29 @@
 
 ---
 
-## ⚡ EXECUÇÃO RÁPIDA (5 minutos de setup)
+## ⚡ COMANDOS RÁPIDOS (Referência)
 
-### Henrique - Demo GPU Completa
+**Henrique - GPU Demo:**
 ```bash
-cd ~/Projects/HashCrackerLab
-source venv/bin/activate
+cd ~/Projects/HashCrackerLab && source venv/bin/activate
 python orchestrator.py --config config/advanced_encryption_test.yaml
 ```
 
-**Timeline:**
-- Validação: 5s
-- Geração 20 hashes: 10s
-- Cracking GPU: 30s
-- Brute-force demo: 5s
-- Benchmark: 15s
-- **Total: ~1min 20s**
-
-**Resultado esperado:**
-```
-Total: 20 hashes
-Crackeadas: 16 (80%)
-GPU Speedup: 16.5x (MD5)
-```
-
-### Ferro - WiFi Cracking
+**Ferro - WiFi:**
 ```bash
-# 1. Capturar handshake (~2-3 min)
 python wifi_cracker.py --capture --ssid LAB-SERVERS --interface wlan0mon
-
-# 2. Crack (~30 segundos)
 python wifi_cracker.py --crack --hash hashes/wifi_sample.hc22000
 ```
 
-### Francisco + Duarte - Telnet Demo
+**Francisco - Telnet Server:**
 ```powershell
-# Francisco (servidor):
 python telnet_authenticated_traffic.py --server --port 23
-
-# Duarte (cliente):
-telnet 192.168.100.30 23
-# Username: admin
-# Password: SecurePass123
 ```
 
-**Wireshark (Francisco):** Filtro `tcp.port == 23` → Ver credenciais em claro
+**Duarte - Telnet Client:**
+```powershell
+telnet 192.168.100.30 23
+```
 
 ---
 
@@ -68,7 +46,7 @@ telnet 192.168.100.30 23
 
 ### FASE 1: INTRODUÇÃO (0:00-3:00)
 
-**Henrique (narrador):**
+**👤 Henrique fala:**
 
 > "Bom dia. Somos especialistas em cibersegurança e hoje vamos demonstrar **3 vulnerabilidades críticas**:
 > 
@@ -78,224 +56,407 @@ telnet 192.168.100.30 23
 > 
 > Vejam como."
 
-**Ação:** Mostrar slides (30s) + apresentar equipa (30s) + setup projector (1min)
+**📋 Ações paralelas:**
+- Mostrar slides (30s)
+- Apresentar equipa (30s)
+- Setup projector (1min)
+- Todos: Abrir terminais e preparar comandos
 
 ---
 
 ### FASE 2: WiFi WPA2 CRACKING (3:00-10:00)
 
-**Duração: 7 minutos**
+**⏱️ Duração: 7 minutos**
 
-#### Passo 1: Captura (3:00-6:00)
+---
 
-**Ferro executa:**
+#### ⏰ 3:00 - Início da Captura
+
+**💻 Ferro executa (terminal visível no projector):**
 ```bash
 cd ~/Projects/HashCrackerLab
 source venv/bin/activate
 python wifi_cracker.py --capture --ssid LAB-SERVERS --interface wlan0mon
 ```
 
-**Output esperado:**
+**📺 Output esperado:**
 ```
 [*] Modo monitor: wlan0mon
 [*] Escutando rede: LAB-SERVERS (Canal 6)
 [*] Aguardando handshake WPA2...
+```
+
+**👤 Henrique narra (enquanto Ferro executa):**
+> "O Ferro está em modo promíscuo, capturando todo o tráfego WiFi. Quando alguém se conecta à rede 'LAB-SERVERS', capturamos o handshake WPA2. Este handshake contém informação suficiente para um ataque offline com dicionário."
+
+---
+
+#### ⏰ 5:00 - Handshake Capturado
+
+**📺 Terminal do Ferro mostra:**
+```
 [!] HANDSHAKE CAPTURADO! → hashes/wifi_sample.hc22000
 ```
 
-**Henrique narra (enquanto captura):**
-> "O Ferro está em modo promíscuo, capturando tráfego WiFi. Quando alguém se conecta à rede 'LAB-SERVERS', capturamos o handshake WPA2. Este handshake contém informação suficiente para ataque offline."
+**👤 Henrique:**
+> "Pronto! Handshake capturado. Agora vamos para a fase de cracking offline."
 
-**⏱️ Tempo: ~2-3 minutos**
+---
 
-#### Passo 2: Cracking (6:00-10:00)
+#### ⏰ 6:00 - Começar Cracking
 
-**Ferro executa:**
+**💻 Ferro executa:**
 ```bash
 python wifi_cracker.py --crack --hash hashes/wifi_sample.hc22000
 ```
 
-**Output esperado:**
+**📺 Output em tempo real:**
 ```
 [*] Cracking WPA2 com hashcat mode 22000...
 [*] Wordlist: wordlists/rockyou.txt
+[*] Testando passwords...
 [+] PASSWORD ENCONTRADA: Cibersegura
 [+] Tempo: 3.2 segundos
 ```
 
-**Henrique narra:**
-> "Em **3 segundos**, encontramos a password. A GPU testou milhões de combinações. Se a password fosse forte (16+ caracteres aleatórios), demoraria anos."
+**👤 Henrique explica:**
+> "Em apenas **3 segundos**, a GPU encontrou a password! Testou milhões de combinações da wordlist. 
+> 
+> Se a password fosse forte - 16+ caracteres aleatórios - este ataque demoraria anos. Mas 'Cibersegura' está numa wordlist comum."
 
-**⏱️ Tempo: ~30 segundos de cracking + 3 min explicação**
+**⏱️ Tempo total fase: ~7 minutos**
 
 ---
 
 ### FASE 3: TELNET CREDENTIAL CAPTURE (10:00-17:00)
 
-**Duração: 7 minutos**
+**⏱️ Duração: 7 minutos**
 
-#### Passo 1: Servidor (10:00-11:00)
+---
 
-**Francisco executa:**
+#### ⏰ 10:00 - Setup Servidor + Wireshark
+
+**💻 Francisco executa (terminal 1):**
 ```powershell
 cd C:\Users\Francisco\HashCrackerLab
 .\venv\Scripts\Activate.ps1
 python telnet_authenticated_traffic.py --server --port 23
 ```
 
-**Output:**
+**📺 Output:**
 ```
 [SERVER] Telnet listening on 0.0.0.0:23
 [SERVER] Waiting for connections...
 ```
 
-**Francisco abre Wireshark:**
+**💻 Francisco abre Wireshark (paralelo):**
 ```
-Filtro: tcp.port == 23
-Start Capture
+1. Abrir Wireshark
+2. Selecionar interface de rede (WiFi/Ethernet)
+3. Filtro: tcp.port == 23
+4. Start Capture
 ```
 
-#### Passo 2: Cliente Conecta (11:00-13:00)
+**👤 Henrique explica:**
+> "O Francisco iniciou um servidor Telnet fake e o Wireshark para capturar todo o tráfego. Telnet não usa encriptação - tudo vai em texto claro."
 
-**Duarte executa:**
+---
+
+#### ⏰ 11:00 - Cliente Conecta
+
+**💻 Duarte executa (projector em split-screen: terminal + Wireshark):**
 ```powershell
 telnet 192.168.100.30 23
 ```
 
-**No Telnet prompt:**
+**📺 Prompt Telnet:**
 ```
 Username: admin
 Password: SecurePass123
 ```
 
-**⏱️ Tempo: ~1 minuto**
+**💻 Duarte digita:**
+```
+admin [ENTER]
+SecurePass123 [ENTER]
+```
 
-#### Passo 3: Análise Wireshark (13:00-17:00)
+---
 
-**Francisco mostra no Wireshark (projetado):**
+#### ⏰ 13:00 - Análise no Wireshark
+
+**📺 Francisco mostra Wireshark (projetado):**
 ```
 Packet #42: Telnet Data
+    Source: 192.168.100.40 (Duarte)
+    Destination: 192.168.100.30 (Francisco)
     Data: "admin"
+
 Packet #43: Telnet Data
     Data: "SecurePass123"
 ```
 
-**Henrique narra:**
-> "Vejam! A password 'SecurePass123' aparece em **texto claro**. Qualquer pessoa nesta rede consegue ver. Por isso usamos **SSH** em produção, nunca Telnet."
+**👤 Henrique narra (apontando para tela):**
+> "Vejam aqui! A password **'SecurePass123'** aparece em **texto claro** no Wireshark. 
+> 
+> Qualquer pessoa nesta rede - um atacante com Wireshark - consegue ver as credenciais. 
+> 
+> Por isso, em produção, **NUNCA** usamos Telnet. Usamos SSH, que encripta tudo."
 
-**⏱️ Tempo: ~4 minutos (demo + explicação)**
+**👤 Francisco (mostra outro packet):**
+> "E não é só a password. Tudo que o Duarte digitar - comandos, ficheiros - fica visível."
+
+**⏱️ Tempo total fase: ~7 minutos**
 
 ---
 
 ### FASE 4: GPU CRACKING (17:00-27:00)
 
-**Duração: 10 minutos**
+**⏱️ Duração: 10 minutos**
 
-#### Passo 1: Execução (17:00-19:00)
+---
 
-**Henrique executa:**
+#### ⏰ 17:00 - Início da Demo GPU
+
+**💻 Henrique executa (terminal em full screen no projector):**
 ```bash
 cd ~/Projects/HashCrackerLab
 source venv/bin/activate
 python orchestrator.py --config config/advanced_encryption_test.yaml
 ```
 
-**Henrique narra (durante execução):**
-> "Vou gerar 20 hashes com **4 algoritmos diferentes**:
-> - MD5 (legacy, rápido)
-> - SHA-256 (moderno, comum)
-> - Bcrypt (resistente, com 'cost factor')
-> - Argon2 (memory-hard, mais recente)
+**👤 Henrique narra (antes de executar):**
+> "Agora vou demonstrar o poder das GPUs modernas. Vou gerar 20 hashes com **4 algoritmos diferentes**:
+> - **MD5** - legacy, muito rápido
+> - **SHA-256** - moderno, usado em Bitcoin
+> - **Bcrypt** - resistente, tem 'cost factor'
+> - **Argon2** - memory-hard, o mais recente e seguro
 > 
-> A GPU vai tentar cracka-los todos."
+> A GPU vai tentar cracka-los todos. Vejam a diferença de velocidade."
 
-#### Passo 2: Acompanhar Output (19:00-22:00)
+---
 
-**Output em tempo real:**
+#### ⏰ 17:30 - Geração de Hashes
+
+**📺 Output em tempo real:**
 ```
 [*] Validando configuração... ✓
-[*] Gerando 20 hashes...
+[*] Gerando 20 hashes com 4 algoritmos...
   - Bcrypt (cost 5): 5 hashes
-  - Argon2: 5 hashes
-  - MD5: 5 hashes
-  - SHA-256: 5 hashes
-[✓] 20 hashes gerados em 3.1s
+  - Argon2 (memory-hard): 5 hashes
+  - MD5 (sem salt): 5 hashes
+  - SHA-256 (com salt): 5 hashes
+[✓] 20 hashes gerados em 3.1 segundos
+```
 
-[*] Iniciando cracking com GPU...
+---
+
+#### ⏰ 18:00 - Cracking Começa
+
+**📺 Output continua (terminal a rolar):**
+```
+[*] Iniciando cracking com GPU NVIDIA...
+[*] Modo: Dictionary Attack
+[*] Wordlist: wordlists/rockyou.txt (14M passwords)
+
 [GPU] MD5: 22.5 GH/s ⚡⚡⚡
 [GPU] SHA-256: 8.2 GH/s ⚡⚡
 [GPU] Bcrypt: 2.1 MH/s ⚡
-[GPU] Argon2: Testing...
+[GPU] Argon2: 850 H/s
 
-[!] Password encontrada: password (MD5)
-[!] Password encontrada: 123456 (Bcrypt)
-[!] Password encontrada: qwerty (SHA-256)
+[!] Password encontrada: password (MD5) - 0.02s
+[!] Password encontrada: 123456 (Bcrypt) - 0.8s
+[!] Password encontrada: qwerty (SHA-256) - 0.1s
+[!] Password encontrada: letmein (MD5) - 0.03s
+[!] Password encontrada: password (Argon2) - 4.2s
 ...
-
-[✓] Cracking concluído! 16 de 20 crackeadas (80%)
 ```
 
-**Henrique explica (durante execução):**
-> "Vejam a velocidade da GPU:
-> - **MD5:** 22 **bilhões** de hashes por segundo!
-> - **Bcrypt:** Mais resistente, apenas 2 milhões/s
-> - **Argon2:** Memory-hard, ainda mais lento
+**👤 Henrique explica (enquanto executa):**
+> "Vejam a velocidade:
+> - **MD5:** 22.5 **bilhões** de hashes por segundo! É por isso que MD5 não é mais usado para passwords.
+> - **SHA-256:** 8.2 bilhões/s - ainda muito rápido
+> - **Bcrypt:** Apenas 2.1 **milhões**/s - muito mais resistente porque tem 'cost factor'
+> - **Argon2:** 850 hashes/s - memory-hard, o mais lento e seguro
 > 
 > A GPU é **16 vezes mais rápida** que CPU para MD5!"
 
-#### Passo 3: Benchmark + Demo Brute-Force (22:00-27:00)
+---
 
-**Output continua:**
+#### ⏰ 19:00 - Resultados Finais
+
+**📺 Output:**
 ```
-[*] Simulando brute-force de PIN (0000-9999)...
-Testando: 0000, 0001, 0002, ..., 5239
-[+] PIN encontrado: 5239 (2.1 segundos, 2450 tentativas)
+[✓] Cracking concluído em 42 segundos!
 
-[*] Benchmark GPU vs CPU:
-┌──────────┬──────────┬──────────┬─────────┐
-│ Algoritmo│ GPU/sec  │ CPU/sec  │ Speedup │
-├──────────┼──────────┼──────────┼─────────┤
-│ MD5      │ 22.5GH/s │ 1.4GH/s  │ 16.5x ⚡ │
-│ SHA-256  │ 8.2GH/s  │ 0.8GH/s  │  9.9x ⚡ │
-│ Bcrypt   │ 2.1MH/s  │ 0.4MH/s  │  5.2x ⚡ │
-└──────────┴──────────┴──────────┴─────────┘
-
-[✓] Resultados salvos em: results/advanced_crypto_test_*/
+RESUMO:
+┌──────────┬───────┬───────────┬────────┐
+│ Algoritmo│ Total │ Crackeadas│  Taxa  │
+├──────────┼───────┼───────────┼────────┤
+│ MD5      │   5   │     5     │ 100% ✓ │
+│ SHA-256  │   5   │     4     │  80%   │
+│ Bcrypt   │   5   │     4     │  80%   │
+│ Argon2   │   5   │     3     │  60%   │
+├──────────┼───────┼───────────┼────────┤
+│ TOTAL    │  20   │    16     │  80%   │
+└──────────┴───────┴───────────┴────────┘
 ```
 
-**Henrique narra:**
-> "A demo de força bruta mostra **tentativa e erro**. Para um PIN de 4 dígitos (10.000 combinações), a GPU leva 2 segundos.
+**👤 Henrique:**
+> "80% de sucesso. Porquê não 100%? Porque algumas passwords ('admin', 'teste') não estão na wordlist. Em produção, usam-se wordlists gigantes com milhões de entradas."
+
+---
+
+#### ⏰ 22:00 - Demo Visual de Brute-Force
+
+**📺 Output continua:**
+```
+[*] DEMO: Simulando brute-force de PIN (0000-9999)...
+
+Testando: 0000 ✗
+Testando: 0001 ✗
+Testando: 0002 ✗
+...
+Testando: 5237 ✗
+Testando: 5238 ✗
+Testando: 5239 ✓
+
+[+] PIN encontrado: 5239
+[+] Tempo: 2.1 segundos
+[+] Tentativas: 5240 de 10000 possíveis
+```
+
+**👤 Henrique explica:**
+> "Esta demo mostra o conceito de **tentativa e erro**. 
 > 
-> Para uma password de 8 caracteres alfanuméricos (62^8 = 218 **trilhões**), mesmo a GPU demoraria anos. Por isso **senhas fortes são críticas**."
+> Para um PIN de 4 dígitos (10.000 combinações), a GPU levou 2 segundos.
+> 
+> Mas para uma password de 8 caracteres alfanuméricos: 62^8 = 218 **trilhões** de combinações. Mesmo a GPU demoraria anos!
+> 
+> **Por isso senhas fortes (16+ chars aleatórios) são críticas.**"
 
-**⏱️ Tempo: ~8 minutos (execução + narração + benchmark)**
+---
+
+#### ⏰ 24:00 - Benchmark GPU vs CPU
+
+**📺 Output final:**
+```
+[*] Benchmark GPU vs CPU:
+
+┌──────────┬──────────┬──────────┬─────────────┐
+│ Algoritmo│ GPU/sec  │ CPU/sec  │  Speedup    │
+├──────────┼──────────┼──────────┼─────────────┤
+│ MD5      │ 22.5GH/s │ 1.4GH/s  │ 16.5x ⚡⚡⚡ │
+│ SHA-256  │ 8.2GH/s  │ 0.8GH/s  │  9.9x ⚡⚡  │
+│ Bcrypt   │ 2.1MH/s  │ 0.4MH/s  │  5.2x ⚡    │
+│ Argon2   │ 850 H/s  │ 140 H/s  │  6.1x ⚡    │
+└──────────┴──────────┴──────────┴─────────────┘
+
+[✓] Resultados salvos em: results/advanced_crypto_test_20260209_150345/
+```
+
+**👤 Henrique:**
+> "Este benchmark mostra porque GPUs são usadas em Bitcoin mining e password cracking. 
+> 
+> A diferença é **brutal** - 16 vezes mais rápida para MD5. É por isso que data centers de cracking usam racks com dezenas de GPUs."
+
+**⏱️ Tempo total fase: ~10 minutos**
 
 ---
 
 ### FASE 5: CONCLUSÕES (27:00-30:00)
 
-**Duração: 3 minutos**
+**⏱️ Duração: 3 minutos**
+
+---
+
+#### ⏰ 27:00 - Resumo Final
+
+**📺 Slide/Projector: Resumo das 3 Vulnerabilidades**
+
+**👤 Henrique:**
+
+> "**Resumo do que demonstramos hoje:**
+> 
+> **1. WiFi WPA2 - Crackeável Offline**
+> - Handshake capturado em 2-3 minutos
+> - Password crackeada em 3 segundos com GPU
+> - **Proteção:** Senhas fortes (16+ caracteres aleatórios)
+> 
+> **2. Telnet - Credenciais em Texto Claro**
+> - Tudo visível no Wireshark
+> - Qualquer pessoa na rede consegue ver
+> - **Proteção:** Usar SSH, HTTPS, VPNs sempre
+> 
+> **3. Hashes Fracos - GPU Cracking**
+> - MD5: 22 bilhões de tentativas/segundo
+> - GPU 16x mais rápida que CPU
+> - **Proteção:** Algoritmos modernos (Argon2, Bcrypt) + senhas fortes"
+
+---
+
+#### ⏰ 28:30 - Lição Final
+
+**👤 Henrique (conclusão):**
+
+> "**A grande lição:**
+> 
+> Criptografia moderna (WPA2, Bcrypt, Argon2) é **matematicamente robusta**. 
+> 
+> Mas é **completamente inútil** se usarmos senhas fracas como:
+> - 'password'
+> - '123456'
+> - 'Cibersegura'
+> 
+> Uma senha de 6 caracteres pode ser crackeada em minutos.
+> Uma senha de 16+ caracteres aleatórios levaria **séculos** mesmo com GPU.
+> 
+> **Segurança = Algoritmos Fortes + Senhas Fortes**
+> 
+> Sem ambos, estamos vulneráveis."
+
+---
+
+#### ⏰ 29:00 - Q&A
+
+**👤 Henrique:**
+
+> "Perguntas?"
+
+**📋 Tópicos de resposta (se perguntarem):**
+- Quanto tempo demoraria com senha forte? → Séculos/milénios
+- Isto é legal? → Apenas em ambientes controlados/autorizados (pentest)
+- Como me proteger? → Senhas únicas 16+ chars, 2FA, password manager
+- WPA3 é melhor? → Sim, mas ainda vulnerável a senhas fracas
+
+**⏱️ Tempo total fase: ~3 minutos**
+
+---
+
+## 📋 CHECKLIST PRÉ-APRESENTAÇÃO (5 min antes)
+
+**Todos:**
+- [ ] Conectados à rede WiFi/Ethernet
+- [ ] IPs funcionais: `ping 192.168.100.1`
+- [ ] Projector conectado e testado
+- [ ] Terminais abertos e prontos
 
 **Henrique:**
+- [ ] `python tools/validate_environment.py` → ✓
+- [ ] `hashcat -I` → GPU detectada
 
-> "**Resumo das vulnerabilidades demonstradas:**
-> 
-> 1. **WiFi WPA2:** Handshake capturável → attack offline → 3 segundos com GPU
->    - **Proteção:** Senhas fortes (16+ chars aleatórios)
-> 
-> 2. **Telnet:** Credenciais em texto claro → visível para todos na rede
->    - **Proteção:** Usar SSH, HTTPS, VPNs
-> 
-> 3. **Hashes fracos:** MD5 cai em segundos → 22 bilhões de tentativas/segundo
->    - **Proteção:** Algoritmos modernos (Argon2, Bcrypt) + senhas fortes
-> 
-> **A lição final:** 
-> Criptografia moderna é **robusta**, mas **inútil sem senhas fortes**. 
-> Uma senha de 6 caracteres é pior que nenhuma encriptação.
-> 
-> Perguntas?"
+**Ferro:**
+- [ ] `iwconfig | grep mon` → wlan0mon existe
+- [ ] Wordlist presente: `ls wordlists/rockyou.txt`
 
-**⏱️ Tempo: 2 min resumo + 1 min Q&A**
+**Francisco:**
+- [ ] Wireshark aberto
+- [ ] Interface de rede selecionada
+- [ ] Filtro preparado: `tcp.port == 23`
+
+**Duarte:**
+- [ ] Terminal aberto
+- [ ] Comando telnet testado
 
 ---
 
