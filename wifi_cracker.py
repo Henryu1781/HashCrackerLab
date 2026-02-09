@@ -40,7 +40,7 @@ class WiFiCracker:
         """Verifica se interface está em modo monitor"""
         try:
             result = subprocess.run(
-                ["iwconfig", self.monitor_iface],
+                ["iw", "dev", self.monitor_iface, "info"],
                 capture_output=True,
                 text=True,
                 timeout=5
@@ -48,9 +48,9 @@ class WiFiCracker:
             if result.returncode != 0:
                 print(f"[!] Interface {self.monitor_iface} não encontrada!")
                 return False
-            return "Monitor" in result.stdout
+            return "monitor" in result.stdout.lower()
         except FileNotFoundError:
-            print("[!] iwconfig não encontrado. Instalar: sudo pacman -S wireless_tools")
+            print("[!] iw não encontrado. Instalar: sudo apt install iw")
             return False
         except Exception:
             print(f"[!] Interface {self.monitor_iface} não encontrada!")
