@@ -37,19 +37,31 @@ class WiFiCracker:
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
     def check_monitor_mode(self) -> bool:
-        """Verifica se interface está em modo monitor via /sys/class/net"""
-        iface_path = Path(f"/sys/class/net/{self.monitor_iface}")
-        
-        if not iface_path.exists():
-            print(f"[!] Interface {self.monitor_iface} não encontrada!")
-            return False
-        
+        """Verifica se interface está em modo monitor"""
+        # iw pode estar em /usr/sbin (não no PATH default)
+        iw_paths = ["/usr/sbin/iw", "/sbin/iw", "/usr/bin/iw", "iw"]
+        iw_cmd = None
+        for p in iw_paths:
+            if os.path.isfile(p) or p == "iw":
+                iw_cmd = p
+                break
+
         try:
-            # type 803 = monitor mode
-            iface_type = (iface_path / "type").read_text().strip()
-            return iface_type == "803"
+            result = subprocess.run(
+                [iw_cmd, "dev", self.monitor_iface, "info"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode != 0:
+                print(f"[!] Interface {self.monitor_iface} não encontrada!")
+                return False
+            return "monitor" in result.stdout.lower()
+        except FileNotFoundError:
+            print(f"[!] iw não encontrado. Instalar: sudo apt install iw")
+            return False
         except Exception:
-            print(f"[!] Não foi possível verificar {self.monitor_iface}")
+            print(f"[!] Interface {self.monitor_iface} não encontrada!")
             return False
     
     def scan_networks(self, timeout: int = 30) -> List[Dict]:
