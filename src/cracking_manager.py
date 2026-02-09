@@ -78,11 +78,26 @@ class CrackingManager:
     
     def run_cracking(self, hashes_file: Path, output_dir: Path) -> Dict:
         """Executar cracking de todos os hashes"""
+        workers_config = self.config.get('experiment', {}).get('cracking', {}).get('workers', {})
+        gpu_enabled = workers_config.get('gpu', {}).get('enabled', True)
+        cpu_enabled = workers_config.get('cpu', {}).get('enabled', False)
+        
+        # Determinar quais dispositivos testar
+        devices = []
+        if gpu_enabled:
+            devices.append(('gpu', '2'))  # OpenCL device type 2 = GPU
+        if cpu_enabled:
+            devices.append(('cpu', '1'))  # OpenCL device type 1 = CPU
+        
+        if not devices:
+            devices = [('gpu', '2')]  # Default: GPU
+        
         results = {
             'total_hashes': 0,
             'cracked': 0,
             'by_algorithm': {},
             'by_mode': {},
+            'by_device': {},
             'executions': []
         }
         
@@ -100,19 +115,41 @@ class CrackingManager:
                 by_algo[algo] = []
             by_algo[algo].append(h)
         
-        # Processar cada algoritmo
-        for algo, hashes in by_algo.items():
-            self.logger.info(f"Processando {len(hashes)} hashes {algo}...")
+        # Processar cada algoritmo em cada dispositivo
+        for device_name, device_type in devices:
+            self.logger.info(f"\n{'='*50}")
+            self.logger.info(f"Dispositivo: {device_name.upper()}")
+            self.logger.info(f"{'='*50}")
             
-            algo_results = self._crack_algorithm(
-                algo, 
-                hashes, 
-                output_dir / algo
-            )
+            device_results = {
+                'total_hashes': len(all_hashes),
+                'cracked': 0,
+                'by_algorithm': {}
+            }
             
-            results['by_algorithm'][algo] = algo_results
-            results['cracked'] += algo_results['cracked']
-            results['executions'].extend(algo_results['executions'])
+            for algo, hashes in by_algo.items():
+                self.logger.info(f"[{device_name.upper()}] Processando {len(hashes)} hashes {algo}...")
+                
+                algo_dir = output_dir / f"{algo}_{device_name}"
+                algo_results = self._crack_algorithm(
+                    algo, 
+                    hashes, 
+                    algo_dir,
+                    device_type=device_type
+                )
+                
+                # Tag results with device
+                for exec_r in algo_results['executions']:
+                    exec_r['device'] = device_name
+                
+                algo_key = f"{algo}_{device_name}" if len(devices) > 1 else algo
+                results['by_algorithm'][algo_key] = algo_results
+                device_results['by_algorithm'][algo] = algo_results
+                device_results['cracked'] += algo_results['cracked']
+                results['executions'].extend(algo_results['executions'])
+            
+            results['by_device'][device_name] = device_results
+            results['cracked'] = max(results['cracked'], device_results['cracked'])
         
         # Salvar resultados
         results_file = output_dir / "cracking_results.json"
@@ -121,7 +158,7 @@ class CrackingManager:
         
         return results
     
-    def _crack_algorithm(self, algo: str, hashes: List[Dict], output_dir: Path) -> Dict:
+    def _crack_algorithm(self, algo: str, hashes: List[Dict], output_dir: Path, device_type: str = None) -> Dict:
         """Executar cracking para um algoritmo específico"""
         output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -149,7 +186,8 @@ class CrackingManager:
                 hash_file,
                 mode_config,
                 output_dir,
-                hash_type
+                hash_type,
+                device_type=device_type
             )
             
             results['executions'].append(exec_result)
@@ -172,11 +210,12 @@ class CrackingManager:
     
     def _execute_cracking_mode(self, algo: str, hash_file: Path, 
                                 mode_config: Dict, output_dir: Path,
-                                hash_type: int) -> Dict:
+                                hash_type: int, device_type: str = None) -> Dict:
         """Executar um modo de cracking específico"""
         mode_type = mode_config['type']
         # Usar potfile único por algoritmo E modo
         potfile = output_dir / f"cracked_{algo}_{mode_type}.pot"
+        self._current_device_type = device_type
         
         start_time = time.time()
         
@@ -244,6 +283,10 @@ class CrackingManager:
             str(wordlist)
         ]
         
+        # Adicionar filtro de dispositivo (CPU=1, GPU=2)
+        if getattr(self, '_current_device_type', None):
+            cmd.extend(['-D', self._current_device_type])
+        
         if rules:
             cmd.extend(['-r', str(rules)])
         
@@ -300,6 +343,10 @@ class CrackingManager:
             mask
         ]
         
+        # Adicionar filtro de dispositivo (CPU=1, GPU=2)
+        if getattr(self, '_current_device_type', None):
+            cmd.extend(['-D', self._current_device_type])
+        
         self.logger.debug(f"Comando: {' '.join(cmd)}")
         
         try:
@@ -345,6 +392,10 @@ class CrackingManager:
             str(hash_file), str(wl_left), str(wl_right)
         ]
         
+        # Adicionar filtro de dispositivo (CPU=1, GPU=2)
+        if getattr(self, '_current_device_type', None):
+            cmd.extend(['-D', self._current_device_type])
+        
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=max_time, cwd=hashcat_cwd)
             return {'command': ' '.join(cmd), 'cracked': self._count_cracked(potfile), 'returncode': result.returncode}
@@ -374,6 +425,10 @@ class CrackingManager:
             hashcat_cmd, '-m', str(hash_type), '-a', mode,
             '--potfile-path', str(potfile), '--quiet', '--force'
         ] + args
+        
+        # Adicionar filtro de dispositivo (CPU=1, GPU=2)
+        if getattr(self, '_current_device_type', None):
+            cmd.extend(['-D', self._current_device_type])
         
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=max_time, cwd=hashcat_cwd)
@@ -409,7 +464,7 @@ class CrackingManager:
             'bcrypt': 3200,
             'scrypt': 8900,
             'pbkdf2_sha256': 10900,
-            'argon2': 19600  # argon2id
+            'argon2': 34000  # argon2id
         }
         
         return mapping.get(algo, 0)

@@ -1,12 +1,14 @@
-# 🔐 HashCrackerLab - Demonstração de Criptografia Ofensiva
+# 🔐 HashCrackerLab — Projeto Final de Cibersegurança
 
-**Projeto Final de Cibersegurança** | **Timeline: 30 minutos**
+**Unidade Curricular:** Cibersegurança
+**Grupo de Alunos:** Henrique · Ferro · Francisco · Duarte
+**Duração da Apresentação:** 30 minutos
 
 ---
 
-## 👥 Equipa
+## 👥 Grupo
 
-| Nome | Sistema | Função |
+| Aluno | Sistema | Função |
 |------|---------|--------|
 | **Henrique** | Arch Linux | GPU Cracking + Coordenação |
 | **Ferro** | Kali Linux | WiFi WPA2 Penetration Testing |
@@ -58,14 +60,14 @@ wireshark --version  # Validar Wireshark
 
 ## 🎯 Execução Rápida (5 minutos)
 
-### Demonstração GPU Standalone (Henrique)
+### Demonstração GPU + CPU (Henrique)
 ```bash
 cd ~/Projects/HashCrackerLab
 source venv/bin/activate
-python orchestrator.py --config config/advanced_encryption_test.yaml
+python orchestrator.py --config config/apresentacao_final.yaml
 ```
 
-**Output esperado:** 20 hashes → 16 crackeadas (80%) em ~1 minuto
+**Output esperado:** 200 hashes (50×4 algoritmos) → ~98 crackeadas (49%) com comparação CPU vs GPU
 
 ### WiFi Cracking (Ferro)
 ```bash
@@ -89,8 +91,9 @@ telnet 192.168.100.30 23
 ## 📊 Capabilities
 
 ### ✅ Hash Cracking
-- **Algoritmos:** MD5, SHA-256, Bcrypt, Argon2, SHA-1, Scrypt, PBKDF2
-- **Ataques:** Dicionário, Brute-Force, Combinator, Hybrid
+- **Algoritmos:** MD5, SHA-256, Bcrypt, Argon2id
+- **Amostra:** 50 passwords × 4 algoritmos = 200 hashes
+- **Comparação:** CPU vs GPU (hashcat -D flag)
 - **GPU:** 16.5x speedup vs CPU (MD5)
 
 ### ✅ WiFi Security
@@ -120,19 +123,20 @@ telnet 192.168.100.30 23
 
 ---
 
-## 📈 Resultados Típicos
+## 📈 Resultados Esperados
 
 ```
-┌─────────────────────────────────────────────────┐
-│ GPU CRACKING BENCHMARK                          │
-├─────────────────────────────────────────────────┤
-│ MD5:     22.5 GH/s → 16.5x faster than CPU     │
-│ SHA-256:  8.2 GH/s →  9.9x faster than CPU     │
-│ Bcrypt:   2.1 MH/s →  5.2x faster than CPU     │
-├─────────────────────────────────────────────────┤
-│ WiFi WPA2: 2-5 segundos (password na wordlist) │
-│ Telnet:    Credenciais visíveis instantemente  │
-└─────────────────────────────────────────────────┘
+┌──────────┬───────┬───────────┬──────────────┬──────────────┬─────────┐
+│ Algoritmo│ Total │ Crackeadas│   Tempo GPU  │  Tempo CPU   │ Speedup │
+├──────────┼───────┼───────────┼──────────────┼──────────────┼─────────┤
+│ MD5      │  50   │    30     │    0.3s      │    4.8s      │  16.5x  │
+│ SHA-256  │  50   │    28     │    1.2s      │   12.0s      │   9.9x  │
+│ Bcrypt   │  50   │    22     │   18.0s      │   95.0s      │   5.2x  │
+│ Argon2   │  50   │    18     │   45.0s      │  timeout     │   6.1x  │
+├──────────┼───────┼───────────┼──────────────┼──────────────┼─────────┤
+│ WiFi WPA2│   1   │     1     │    3.2s      │     —        │    —    │
+│ Telnet   │   —   │     —     │  plaintext   │  plaintext   │    —    │
+└──────────┴───────┴───────────┴──────────────┴──────────────┴─────────┘
 ```
 
 ---

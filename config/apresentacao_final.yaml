@@ -1,0 +1,106 @@
+# ============================================================
+# Configuração Final — Apresentação Cibersegurança
+# 50 hashes × 4 algoritmos = comparação CPU vs GPU
+# ============================================================
+experiment:
+  name: "apresentacao_final"
+  description: "50 hashes com 4 algoritmos para comparar CPU vs GPU"
+  seed: 42
+  deterministic_salts: true
+  
+  hash_generation:
+    count: 50
+    algorithms:
+      - name: "md5"
+        salt: false
+      - name: "sha256"
+        salt: true
+      - name: "bcrypt"
+        cost: 5       # Cost baixo para demo (~0.05s/hash)
+      - name: "argon2"
+        cost: 2        # Memory 2 KB — baixo para demo
+        iterations: 1
+    
+    # 50 passwords: mix de fracas (caem) e fortes (resistem)
+    password_patterns:
+      # Top 20 — passwords mais comuns (devem ser crackeadas)
+      - "123456"
+      - "password"
+      - "qwerty"
+      - "letmein"
+      - "iloveyou"
+      - "admin"
+      - "monkey"
+      - "dragon"
+      - "master"
+      - "abc123"
+      - "football"
+      - "shadow"
+      - "michael"
+      - "princess"
+      - "sunshine"
+      - "trustno1"
+      - "batman"
+      - "access"
+      - "hello"
+      - "charlie"
+      # 15 passwords médias (algumas caem, outras não)
+      - "summer2024"
+      - "welcome1"
+      - "pass1234"
+      - "soccer22"
+      - "ashley99"
+      - "jessica01"
+      - "daniel77"
+      - "nicole88"
+      - "hunter42"
+      - "mustang1"
+      - "freedom1"
+      - "thunder9"
+      - "ginger23"
+      - "killer99"
+      - "george55"
+      # 15 passwords fortes (devem resistir à wordlist)
+      - "X7k#mP9$vL2@"
+      - "Qw3rTy!@#456"
+      - "B1n4ry_St0rm!"
+      - "Cr¥pt0_L4b_99"
+      - "N3tw0rk$ecure"
+      - "H4shCr4ck3r!!"
+      - "P@55w0rd_T35t"
+      - "Cyb3r_D3f3ns3"
+      - "F1r3w4ll#2026"
+      - "S3cur1ty_L4b!"
+      - "3ncrypt10n_K3y"
+      - "Z3r0_D4y_Att4ck"
+      - "Pr0t0c0l_SSH!"
+      - "R00t_Acc3ss_X"
+      - "V4uLt_K3y_2026"
+  
+  cracking:
+    modes:
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou-small.txt"
+        rules: null
+        max_time: 120
+    
+    workers:
+      gpu:
+        enabled: true
+        host: "localhost"
+      cpu:
+        enabled: true
+        host: "localhost"
+  
+  wifi:
+    enabled: false
+  
+  output:
+    base_dir: "results/{experiment_name}_{timestamp}"
+    logs: true
+    metrics: true
+    export_formats: ["csv", "json"]
+  
+  security:
+    isolated_network: false
+    auto_cleanup: false
