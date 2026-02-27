@@ -15,7 +15,7 @@ experiment:
   deterministic_salts: true
 
   hash_generation:
-    count: 15
+    count: 10
     algorithms:
       - name: "md5"
         salt: false
