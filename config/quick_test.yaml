@@ -37,10 +37,10 @@ experiment:
 
     workers:
       gpu:
-        enabled: true
+        enabled: false
         host: "localhost"
       cpu:
-        enabled: false    # Só GPU — mais rápido
+        enabled: true     # Forçar CPU-only para este teste rápido
 
   wifi:
     enabled: false
