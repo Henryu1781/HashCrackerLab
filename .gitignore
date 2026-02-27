@@ -39,3 +39,20 @@ Thumbs.db
 # Backups
 *.bak
 *.backup
+
+# Arquivos de captura e teste
+capture-*.csv
+capture-*.kismet.csv
+capture-*.kismet.netxml
+capture-*.log.csv
+captures/*.csv
+captures/*.kismet.*
+captures/*.cap
+captures/*.log.*
+
+# Wordlists de teste
+wordlist.txt
+
+# Lock files
+.~lock.*
+
