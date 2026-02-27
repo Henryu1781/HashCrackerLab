@@ -516,6 +516,31 @@ Uso:
             print(f"[!] Erro: {e}")
             return False
 
+    def _has_eapol(self, cap_file: str) -> bool:
+        """Detecta frames EAPOL no ficheiro pcap usando tshark (se disponível).
+
+        Fallback: retorna False se o tshark não existir.
+        """
+        try:
+            # Verificar tshark
+            which = subprocess.run(["which", "tshark"], capture_output=True, text=True)
+            if which.returncode != 0 or not which.stdout.strip():
+                return False
+
+            # Executar tshark para filtrar frames EAPOL
+            cmd = ["tshark", "-r", cap_file, "-Y", "eapol", "-T", "fields", "-e", "frame.number"]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
+            out = (result.stdout or "").strip()
+            if not out:
+                return False
+            # Se houver pelo menos 1 linha, há EAPOL frames
+            lines = [l for l in out.splitlines() if l.strip()]
+            return len(lines) > 0
+        except subprocess.TimeoutExpired:
+            return False
+        except Exception:
+            return False
+
 def main():
     parser = argparse.ArgumentParser(
         description="WiFi WPA2 Cracker — Captura, Deauth e Cracking",
