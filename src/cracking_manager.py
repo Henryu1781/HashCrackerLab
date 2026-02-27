@@ -294,25 +294,19 @@ class CrackingManager:
         self.logger.debug(f"Comando: {' '.join(cmd)}")
         
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=config.get('max_time', 600),
-                cwd=hashcat_cwd
-            )
-            
+            result = self._run_hashcat_with_fallback(cmd, hashcat_cwd, timeout=config.get('max_time', 600))
+
             # Contar crackeados
             cracked_count = self._count_cracked(potfile)
-            
+
             return {
-                'command': ' '.join(cmd),
+                'command': ' '.join(result.get('cmd', cmd)),
                 'cracked': cracked_count,
-                'returncode': result.returncode,
-                'stdout': result.stdout[:500],  # Limitar output
-                'stderr': result.stderr[:500]
+                'returncode': result.get('returncode'),
+                'stdout': (result.get('stdout') or '')[:500],
+                'stderr': (result.get('stderr') or '')[:500]
             }
-        
+
         except subprocess.TimeoutExpired:
             self.logger.warning("Timeout atingido")
             return {
@@ -350,21 +344,15 @@ class CrackingManager:
         self.logger.debug(f"Comando: {' '.join(cmd)}")
         
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=max_time,
-                cwd=hashcat_cwd
-            )
-            
+            result = self._run_hashcat_with_fallback(cmd, hashcat_cwd, timeout=max_time)
+
             return {
-                'command': ' '.join(cmd),
+                'command': ' '.join(result.get('cmd', cmd)),
                 'cracked': self._count_cracked(potfile),
-                'returncode': result.returncode,
+                'returncode': result.get('returncode'),
                 'mask': mask
             }
-        
+
         except subprocess.TimeoutExpired:
             return {
                 'command': ' '.join(cmd),
@@ -397,8 +385,8 @@ class CrackingManager:
             cmd.extend(['-D', self._current_device_type])
         
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=max_time, cwd=hashcat_cwd)
-            return {'command': ' '.join(cmd), 'cracked': self._count_cracked(potfile), 'returncode': result.returncode}
+            result = self._run_hashcat_with_fallback(cmd, hashcat_cwd, timeout=max_time)
+            return {'command': ' '.join(result.get('cmd', cmd)), 'cracked': self._count_cracked(potfile), 'returncode': result.get('returncode')}
         except subprocess.TimeoutExpired:
             return {'command': ' '.join(cmd), 'cracked': self._count_cracked(potfile), 'timeout': True}
 
@@ -468,6 +456,47 @@ class CrackingManager:
         }
         
         return mapping.get(algo, 0)
+
+    def _run_hashcat_with_fallback(self, cmd: List[str], cwd: str = None, timeout: int = 600) -> Dict:
+        """Run hashcat command with fallbacks for unstable OpenCL CPU runtimes.
+
+        Strategy:
+        - Run provided `cmd` first.
+        - If returncode < 0 (segfault) or stderr hints at PoCL/LLVM issues, retry without any `-D` device filter so hashcat autodetects.
+        - If still failing and GPU is available, retry with `-D 2` (GPU).
+        Returns a dict with keys: cmd (final cmd list), returncode, stdout, stderr.
+        """
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd)
+            rc = result.returncode
+            stderr = result.stderr or ''
+
+            # If segmentation fault or obvious PoCL/LLVM issues, attempt fallback
+            if rc < 0 or 'pocl' in stderr.lower() or 'llvm' in stderr.lower() or 'segmentation' in stderr.lower():
+                # Retry 1: remove any '-D' device filter so hashcat autodetects platform
+                cmd_no_d = [c for c in cmd if c != '-D']
+                try:
+                    result2 = subprocess.run(cmd_no_d, capture_output=True, text=True, timeout=timeout, cwd=cwd)
+                    rc2 = result2.returncode
+                    if rc2 >= 0:
+                        return {'cmd': cmd_no_d, 'returncode': rc2, 'stdout': result2.stdout, 'stderr': result2.stderr}
+                except Exception:
+                    pass
+
+                # Retry 2: try forcing GPU (-D 2)
+                cmd_gpu = [c for c in cmd if c != '-D'] + ['-D', '2']
+                try:
+                    result3 = subprocess.run(cmd_gpu, capture_output=True, text=True, timeout=timeout, cwd=cwd)
+                    return {'cmd': cmd_gpu, 'returncode': result3.returncode, 'stdout': result3.stdout, 'stderr': result3.stderr}
+                except Exception as e:
+                    return {'cmd': cmd, 'returncode': rc, 'stdout': result.stdout if 'result' in locals() else '', 'stderr': stderr + f"\nfallback-error: {e}"}
+
+            return {'cmd': cmd, 'returncode': rc, 'stdout': result.stdout, 'stderr': stderr}
+
+        except subprocess.TimeoutExpired:
+            raise
+        except Exception as e:
+            return {'cmd': cmd, 'returncode': -1, 'stdout': '', 'stderr': str(e)}
     
     def _count_cracked(self, potfile: Path) -> int:
         """Contar número de hashes crackeados"""
