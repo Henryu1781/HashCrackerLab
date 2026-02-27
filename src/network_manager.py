@@ -28,32 +28,28 @@ class NetworkManager:
             self.logger.warning("Verificação de isolamento não suportada em Windows")
             return True
         
-        # Verificar rotas
-        try:
-            result = subprocess.run(
-                ['ip', 'route'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            
-            routes = result.stdout
-            
-            # Verificar se existe rota default (Internet)
-            if 'default via' in routes:
-                self.logger.warning("[WARN] Rota default detectada - rede NAO isolada!")
-                self.logger.warning("Execute: sudo ip route del default")
-                return False
-            
-            self.logger.info("[OK] Nenhuma rota default - rede isolada")
-            return True
+        # Testar conectividade real à Internet (ping a DNS públicos)
+        # Uma rede isolada pode ter rota default local sem acesso externo
+        test_hosts = ["8.8.8.8", "1.1.1.1"]
+        for host in test_hosts:
+            try:
+                result = subprocess.run(
+                    ['ping', '-c', '1', '-W', '2', host],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if result.returncode == 0:
+                    self.logger.warning(f"[WARN] Ping a {host} bem-sucedido - rede NAO isolada!")
+                    self.logger.warning("Execute: sudo ip route del default")
+                    return False
+            except (subprocess.TimeoutExpired, FileNotFoundError):
+                pass
+            except Exception as e:
+                self.logger.warning(f"Erro ao testar {host}: {e}")
         
-        except FileNotFoundError:
-            self.logger.warning("Comando 'ip' não encontrado (não é Linux/Unix)")
-            return True
-        except Exception as e:
-            self.logger.error(f"Erro ao verificar rotas: {e}")
-            return False
+        self.logger.info("[OK] Sem acesso à Internet - rede isolada")
+        return True
     
     def capture_handshake(self, output_file: Path) -> bool:
         """Capturar handshake WPA/WPA2 (LAB apenas!)"""
