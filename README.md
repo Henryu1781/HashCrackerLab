@@ -6,37 +6,55 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
 </p>
 
+> Autor: Henrique Carvalho.
+
 # HashCrackerLab
 
-**Plataforma integrada de cibersegurança ofensiva** que orquestra três vetores de ataque — cracking de hashes com benchmarking CPU vs GPU, captura e cracking de handshakes WPA2, e harvesting de credenciais Telnet — num laboratório de rede isolado e reprodutível.
+**Plataforma Integrada de Cibersegurança Ofensiva**
 
-> **Contexto Académico:** Projeto Final da Unidade Curricular de Cibersegurança (Fevereiro 2026).
-> Grupo: Henrique Carvalho · Gonçalo Ferro · Francisco Silva · Duarte Vilar.
+Orquestra três vetores de ataque — cracking de hashes (benchmark CPU vs GPU), captura e cracking de handshakes WPA2, e harvesting de credenciais Telnet — em um laboratório de rede isolado, reprodutível e seguro.
 
----
-
-## Rationale — Porquê "Beyond the Norm"
-
-A maioria dos laboratórios académicos de cibersegurança executa ferramentas isoladas — um `hashcat` aqui, um `aircrack-ng` ali — sem contexto, sem métricas, sem reprodutibilidade. O HashCrackerLab foi construído para resolver isso.
-
-**O problema que resolvemos:**
-- Demonstrações de segurança são tipicamente manuais, frágeis e impossíveis de reproduzir com resultados consistentes.
-- Não existe uma forma standard de comparar a resistência de algoritmos de hashing em condições controladas.
-- A relação entre a escolha de algoritmo, o hardware disponível e o tempo real de ataque raramente é quantificada.
-
-**O que construímos:**
-- Um **orquestrador Python** que automatiza o pipeline completo: geração determinística de hashes → cracking multi-dispositivo → coleta de métricas → relatório comparativo — tudo configurável via YAML.
-- **Reprodutibilidade científica**: seed determinística + salts fixos garantem que dois runs idênticos produzem hashes idênticos. Isto permite comparação justa entre CPU e GPU.
-- **Segurança operacional incorporada**: verificação de isolamento de rede, limpeza segura de dados (3-pass overwrite), anonimização automática de logs, e separação entre hashes seguros e passwords em plaintext.
-- **Multi-vetor num único pipeline**: WiFi WPA2 + Telnet + Hash Cracking coordenados, com fallbacks automáticos (ficheiros pré-capturados se o handshake falhar).
-
-Este não é um script de demonstração. É uma **plataforma de benchmark criptográfico** com rigor suficiente para produzir dados publicáveis e extensível para cenários reais de pentesting.
+> **Projeto Final — Cibersegurança (Fevereiro 2026)**  
+> **Autor:** Henrique Carvalho
 
 ---
 
-## Arquitetura
+## Sumário
 
-### Topologia de Rede
+- [Visão Geral](#visão-geral)
+- [Diferenciais do Projeto](#diferenciais-do-projeto)
+- [Arquitetura e Topologia](#arquitetura-e-topologia)
+ - [Saber o Projeto](docs/SABER_O_PROJETO.md)
+- [Instalação e Setup](#instalação-e-setup)
+- [Utilização](#utilização)
+- [Algoritmos e Modos de Ataque](#algoritmos-e-modos-de-ataque)
+- [Resultados de Referência](#resultados-de-referência)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Histórico de Desenvolvimento](#histórico-de-desenvolvimento)
+- [Troubleshooting](#troubleshooting)
+- [Licença](#licença)
+
+---
+
+
+## Visão Geral
+
+O HashCrackerLab é uma plataforma acadêmica de cibersegurança ofensiva, projetada para experimentação, ensino e demonstração de ataques reais em ambiente controlado. Automatiza todo o ciclo: geração de hashes, ataques multi-dispositivo, coleta de métricas e geração de relatórios, com foco em reprodutibilidade e segurança.
+
+## Diferenciais do Projeto
+
+- **Automação Completa:** Pipeline orquestrado via Python, do início ao fim, sem etapas manuais.
+- **Reprodutibilidade Científica:** Seed e salts determinísticos garantem experimentos idênticos.
+- **Segurança Operacional:** Isolamento de rede, limpeza segura de dados, anonimização de logs e separação de dados sensíveis.
+- **Multi-vetor Integrado:** Ataques coordenados a hashes, WiFi WPA2 e Telnet, com fallback automático.
+- **Extensível e Documentado:** Estrutura modular, fácil de adaptar para novos vetores ou algoritmos.
+
+---
+
+---
+
+
+## Arquitetura e Topologia
 
 ```mermaid
 graph TB
@@ -65,6 +83,7 @@ graph TB
     INTERNET["Internet"] -. "Bloqueado — sem rota default" .-> ROUTER
 ```
 
+
 ### Mapeamento de Portas e Protocolos
 
 | Serviço | Porta | Protocolo | Origem | Destino | Finalidade |
@@ -76,6 +95,7 @@ graph TB
 
 > [!IMPORTANT]
 > A rede **não possui rota default**. O `NetworkManager` valida automaticamente que `ip route` não contém `default via` antes de iniciar qualquer experiência com `isolated_network: true`.
+
 
 ### Pipeline de Execução
 
@@ -93,7 +113,8 @@ flowchart LR
 
 ---
 
-## Instalação
+
+## Instalação e Setup
 
 ### Pré-requisitos
 
@@ -106,14 +127,16 @@ flowchart LR
 | GPU NVIDIA (opcional) | Driver 525+ | `hashcat -I` |
 | Adaptador WiFi com monitor mode | — | `iw dev <iface> info` |
 
-### Passo 1 — Clonar
+
+### Passo 1 — Clonar o Repositório
 
 ```bash
 git clone https://github.com/Henryu1781/HashCrackerLab
 cd HashCrackerLab
 ```
 
-### Passo 2 — Setup por Sistema Operativo
+
+### Passo 2 — Setup por Sistema Operacional
 
 **Arch Linux:**
 ```bash
@@ -137,6 +160,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 > [!IMPORTANT]
 > O script de setup cria o virtual environment, instala dependências Python (`requirements.txt`), descarrega a wordlist `rockyou.txt` (14.3M passwords), e copia as regras do Hashcat.
 
+
 ### Passo 3 — Validar Ambiente
 
 ```bash
@@ -145,9 +169,11 @@ python tools/validate_environment.py
 
 ---
 
+
 ## Utilização
 
-### Configurações Disponíveis
+
+### Perfis de Configuração
 
 | Config | Passwords | Algoritmos | Ataques | Dispositivos | Tempo |
 |--------|-----------|------------|---------|-------------|-------|
@@ -155,7 +181,8 @@ python tools/validate_environment.py
 | `apresentacao_final.yaml` | 15 | 4 | 5 (dict, rules, brute, pattern, hybrid) | GPU + CPU | ~3 min |
 | `real_world.yaml` | 100 | 4 | 5 | GPU + CPU | ~15 min |
 
-### Execução
+
+### Execução dos Experimentos
 
 ```bash
 source venv/bin/activate
@@ -173,7 +200,8 @@ python orchestrator.py --config config/real_world.yaml
 python orchestrator.py --config config/apresentacao_final.yaml --dry-run
 ```
 
-### WiFi WPA2 Cracking
+
+### Ataques WiFi WPA2
 
 ```bash
 # Scan de redes
@@ -189,7 +217,8 @@ python wifi_cracker.py --deauth --network "LAB-SERVERS" --interface wlan00mon
 python wifi_cracker.py --crack captures/handshake_LAB-SERVERS_*.cap
 ```
 
-### Telnet Credential Capture
+
+### Captura de Credenciais Telnet
 
 ```bash
 # Servidor (máquina Francisco)
@@ -199,7 +228,8 @@ python telnet_authenticated_traffic.py --server --target 0.0.0.0 --port 23
 python telnet_authenticated_traffic.py --target 192.168.100.30 --user admin --password SecurePass123 --verbose
 ```
 
-### Consultar Resultados
+
+### Consulta de Resultados
 
 ```bash
 LAST=$(ls -td results/*/ | head -1)
@@ -209,6 +239,7 @@ cat "$LAST/metrics/metrics_by_algorithm.csv"  # CSV por algoritmo
 ```
 
 ---
+
 
 ## Algoritmos e Modos de Ataque
 
@@ -233,6 +264,7 @@ cat "$LAST/metrics/metrics_by_algorithm.csv"  # CSV por algoritmo
 
 ---
 
+
 ## Resultados de Referência
 
 Configuração `apresentacao_final.yaml` — 15 passwords × 4 algoritmos × 5 modos de ataque:
@@ -249,6 +281,7 @@ Configuração `apresentacao_final.yaml` — 15 passwords × 4 algoritmos × 5 m
 > As 5 passwords fortes (ex: `X7k#mP9$vL2@`) resistiram a **todos** os 5 modos de ataque em **todos** os 4 algoritmos. Segurança requer **algoritmo forte + password forte** em simultâneo.
 
 ---
+
 
 ## Estrutura do Projeto
 
@@ -288,7 +321,8 @@ HashCrackerLab/
 
 ---
 
-## Historial de Desenvolvimento
+
+## Histórico de Desenvolvimento
 
 | Fase | Data | Marco |
 |------|------|-------|
@@ -300,6 +334,7 @@ HashCrackerLab/
 Historial completo: [docs/DEVELOPMENT_TIMELINE.md](docs/DEVELOPMENT_TIMELINE.md)
 
 ---
+
 
 ## Troubleshooting
 
@@ -314,6 +349,7 @@ Historial completo: [docs/DEVELOPMENT_TIMELINE.md](docs/DEVELOPMENT_TIMELINE.md)
 | Telnet connection refused | Firewall Windows | `netsh advfirewall set allprofiles state off` (temporário) |
 
 ---
+
 
 ## Licença
 

@@ -1,56 +1,84 @@
-# ============================================================
-# quick_test.yaml — Verificação rápida de erros
-# ============================================================
-# Objetivo: Correr em <30 segundos para validar que tudo funciona
-# Usar ANTES da apresentação para garantir zero erros
-# ============================================================
 experiment:
-  name: "quick_test"
-  description: "Teste rápido — validar ambiente, dependências e pipeline"
+  name: "apresentacao_final"
+  description: "Apresentação final — 5 hashes por algoritmo, 5 modos de ataque, CPU vs GPU, rede isolada"
   seed: 42
   deterministic_salts: true
 
   hash_generation:
-    count: 3
+    count: 5                 # 5 hashes por algoritmo (total 20)
     algorithms:
       - name: "md5"
         salt: false
       - name: "sha256"
         salt: true
       - name: "bcrypt"
-        cost: 4          # Mínimo possível — velocidade máxima
+        cost: 5
       - name: "argon2"
-        cost: 1           # 1 KB — mínimo para teste
+        cost: 2
         iterations: 1
 
     password_patterns:
-      - "password"
       - "123456"
+      - "password"
+      - "qwerty"
       - "admin"
+      - "iloveyou"
+      - "summer2024"
+      - "welcome1"
+      - "pass1234"
+      - "hunter42"
+      - "soccer22"
+      - "X7k#mP9$vL2@"
+      - "B1n4ry_St0rm!"
+      - "N3tw0rk$ecure"
+      - "F1r3w4ll#2026"
+      - "V4uLt_K3y_2026"
 
   cracking:
     modes:
       - type: "dictionary"
-        wordlist: "wordlists/rockyou-small.txt"
+        wordlist: "wordlists/rockyou.txt"
         rules: null
-        max_time: 30
+        max_time: 180
+
+      - type: "dictionary"
+        wordlist: "wordlists/rockyou.txt"
+        rules: "rules/best66.rule"
+        max_time: 300
+
+      - type: "brute-force"
+        mask: "?d?d?d?d"
+        max_time: 60
+
+      - type: "brute-force"
+        mask: "?u?l?l?l?d?d"
+        max_time: 120
+
+      - type: "hybrid"
+        wordlist: "wordlists/rockyou.txt"
+        mask: "?d?d?d"
+        max_time: 300
 
     workers:
       gpu:
         enabled: true
         host: "localhost"
       cpu:
-        enabled: true     # Testar ambos: GPU + CPU
+        enabled: true
+        host: "localhost"
 
   wifi:
-    enabled: false
+    enabled: true
+    interface: "wlan00mon"
+    target_ssid: "LAB-SERVERS"
+    capture_time: 120
 
   output:
     base_dir: "results/{experiment_name}_{timestamp}"
     logs: true
     metrics: true
-    export_formats: ["json"]
+    export_formats: ["csv", "json"]
 
   security:
-    isolated_network: false   # Não exigir rede isolada
+    isolated_network: true
     auto_cleanup: false

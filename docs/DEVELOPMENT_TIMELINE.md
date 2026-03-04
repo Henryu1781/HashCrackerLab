@@ -1,6 +1,16 @@
-# Historial de Desenvolvimento — HashCrackerLab
+
+# Histórico de Desenvolvimento — HashCrackerLab
 
 Linha do tempo reconstruída a partir do histórico de commits do Git, agrupada por fases lógicas de evolução.
+
+---
+
+## Sumário
+
+- [v0.1 — Fundação](#v01--fundação-2026-02-02)
+- [v0.2 — Hardening](#v02--hardening-2026-02-06)
+- [v0.3 — Integração](#v03--integração-2026-02-07-a-2026-02-08)
+- [v0.4 — Apresentação](#v04--apresentação-2026-02-09)
 
 ---
 
@@ -113,7 +123,7 @@ Fase final de preparação para a apresentação académica. Refinamento de par�
 - 5 categorias de ataque configuradas em YAML
 - Wordlist completa RockYou (14.3M entries)
 - WiFi deauth standalone para Kali
-- Guião de apresentação completo de 30 minutos (GUIA_EXECUCAO.md)
+- Guião de apresentação completo de 30 minutos (integrado no README.md)
 - Compatibilidade WiFi verificada em múltiplas distribuições Linux
 
 ---

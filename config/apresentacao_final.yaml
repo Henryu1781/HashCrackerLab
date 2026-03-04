@@ -1,47 +1,33 @@
-# ============================================================
-# apresentacao_final.yaml — Apresentação Completa (30 min)
-# ============================================================
-# Objetivo: Demonstração completa para avaliação
-# - 15 passwords × 4 algoritmos = 60 hashes
-# - 5 modos de ataque: dicionário, rules, brute-force, padrão, híbrido
-# - Comparação CPU vs GPU
-# - Rede isolada obrigatória
-# - WiFi WPA2 + Telnet + Hash Cracking
-# ============================================================
 experiment:
   name: "apresentacao_final"
-  description: "Apresentação final — 15 passwords, 4 algoritmos, 5 modos de ataque, CPU vs GPU, rede isolada"
+  description: "Apresentação final — 10 hashes por algoritmo, 5 modos de ataque, CPU vs GPU, rede isolada"
   seed: 42
   deterministic_salts: true
 
   hash_generation:
-    count: 10
+    count: 10                # 10 hashes por algoritmo (total 40)
     algorithms:
       - name: "md5"
         salt: false
       - name: "sha256"
         salt: true
       - name: "bcrypt"
-        cost: 5           # Cost baixo para demo (~0.05s/hash)
+        cost: 5
       - name: "argon2"
-        cost: 2            # 2 KB — baixo para demo viável
+        cost: 2
         iterations: 1
 
-    # 15 passwords: 5 fracas + 5 médias + 5 fortes
     password_patterns:
-      # --- 5 fracas — passwords comuns (devem ser crackeadas) ---
       - "123456"
       - "password"
       - "qwerty"
       - "admin"
       - "iloveyou"
-      # --- 5 médias (algumas caem, outras não) ---
       - "summer2024"
       - "welcome1"
       - "pass1234"
       - "hunter42"
       - "soccer22"
-      # --- 5 fortes (devem resistir à wordlist) ---
       - "X7k#mP9$vL2@"
       - "B1n4ry_St0rm!"
       - "N3tw0rk$ecure"
@@ -50,29 +36,24 @@ experiment:
 
   cracking:
     modes:
-      # 1. Dicionário simples — rockyou completa (14.3M passwords)
       - type: "dictionary"
         wordlist: "wordlists/rockyou.txt"
         rules: null
         max_time: 180
 
-      # 2. Dicionário + regras de mutação (ex: P@ssw0rd → p4ssw0rd!)
       - type: "dictionary"
         wordlist: "wordlists/rockyou.txt"
         rules: "rules/best66.rule"
         max_time: 300
 
-      # 3. Brute-force — PINs de 4 dígitos (0000–9999)
       - type: "brute-force"
         mask: "?d?d?d?d"
         max_time: 60
 
-      # 4. Brute-force — padrão Ulll99 (maiúscula + 3 minúsculas + 2 dígitos)
       - type: "brute-force"
         mask: "?u?l?l?l?d?d"
         max_time: 120
 
-      # 5. Híbrido — wordlist + 3 dígitos (ex: password123)
       - type: "hybrid"
         wordlist: "wordlists/rockyou.txt"
         mask: "?d?d?d"
@@ -83,7 +64,7 @@ experiment:
         enabled: true
         host: "localhost"
       cpu:
-        enabled: true     # CPU + GPU para comparação
+        enabled: true
         host: "localhost"
 
   wifi:
@@ -99,5 +80,5 @@ experiment:
     export_formats: ["csv", "json"]
 
   security:
-    isolated_network: true    # Rede isolada obrigatória
+    isolated_network: true
     auto_cleanup: false

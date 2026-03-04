@@ -1,12 +1,129 @@
+## Topologia (Resumo)
+
+A topologia do laboratório foi pensada para ser simples, robusta e completamente isolada do tráfego externo. Os equipamentos principais ficam na sub-rede 192.168.100.0/24: um router/AP com DHCP (gateway .1), uma estação de orquestração com GPU (Arch Linux), uma máquina de captura (Kali), e dois nós Windows para gerar tráfego Telnet. O isolamento é obrigatório: não existe rota default e o NAT/forwarding fica desativado.
+
+Principais pontos:
+ - Gateway/AP: 192.168.100.1 — DHCP pool 192.168.100.100–200, WPS desligado, WPA2-PSK com chave forte temporária para demonstração.
+ - Orquestrador (GPU): 192.168.100.10 — `orchestrator.py`, `hashcat` GPU, disco para resultados.
+ - Captura (Kali): 192.168.100.20 — interface em monitor mode (ex: `wlan00mon`) para airodump/aireplay.
+ - Telnet Server / Client (Windows): .30 / .40 — tráfego plaintext para demonstração de colheita de credenciais.
+
+---
+
+## Modus Operandi da Equipa
+
+A equipa trabalhou com um fluxo leve e orientado a entregas incrementais: tarefas pequenas, branches por funcionalidade e revisões de código antes de cada merge na branch `main`. A coordenação técnica manteve uma pessoa responsável pela integração e verificação final, enquanto as restantes tarefas foram distribuídas por especialidade (captura WiFi, integração com `hashcat`, geração de métricas e documentação). Comunicação direta e testes rápidos permitiram iterar funcionalidades com rapidez, seguido de uma fase de hardening e auditoria de segurança.
+
+Práticas adotadas:
+ - Branch por feature e Pull Requests com revisão obrigatória.
+ - Commits curtos e descritivos; changelog mantido manualmente em `CHANGES.md`.
+ - Scripts de validação (`tools/validate_environment.py`) para reduzir erros de ambiente.
+ - Logs e métricas versionados dentro de `results/` por run, com relatórios exportáveis (CSV/JSON).
+
+---
+
+## Network setup — passos práticos
+
+Objetivo: criar uma rede isolada e reprodutível, configurável em redes físicas simples.
+
+1) Configurar o router/AP
+ - Desativar rota default/Internet (route, firewall ou bloquear WAN).  
+ - Desativar WPS.  
+ - Definir SSID (ex: `LAB-SERVERS`) e WPA2-PSK (chave temporária para a sessão).  
+ - DHCP: 192.168.100.100–200; gateway 192.168.100.1.
+
+2) Configurar Orquestrador (Arch/Linux)
+ - IP estático (ex):
+
+```bash
+sudo ip addr add 192.168.100.10/24 dev eth0
+sudo ip route add 192.168.100.0/24 dev eth0
+```
+
+ - Verificar ausência de default route:
+
+```bash
+ip route show | grep default || echo "No default route — isolation OK"
+```
+
+3) Configurar Captura WiFi (Kali)
+ - Colocar interface em monitor mode:
+
+```bash
+sudo airmon-ng check kill
+sudo airmon-ng start wlan0
+# ou: sudo ip link set wlan0 down; sudo iw dev wlan0 set type monitor; sudo ip link set wlan0 up
+```
+
+ - Iniciar scan e captura:
+
+```bash
+airodump-ng wlan00mon --write captures/handshake --output-format cap
+```
+
+ - Para forçar reautenticação (deauth):
+
+```bash
+aireplay-ng --deauth 4 -a <BSSID> wlan00mon
+```
+
+4) Firewall e regras adicionais (opcional)
+ - Em sistemas Linux de demonstração, bloquear forwarding e masquerade:
+
+```bash
+sudo iptables -P FORWARD DROP
+sudo iptables -t nat -F
+```
+
+5) Verificação final
+ - Conferir que não existe `default via` e que o router responde apenas dentro da subrede.  
+ - Conferir que o `NetworkManager.verify_isolation()` do orquestrador passa sem erro.
+
+---
+
+## Desenvolvimento — narrativa e responsabilidade
+
+O desenvolvimento seguiu iterações curtas com foco em funcionalidades testáveis. As fases principais foram:
+
+1) Prova de Conceito (PoC)
+ - Implementação rápida das peças individuais: gerador de hashes, integração básica com `hashcat`, captura de handshakes WiFi e módulo Telnet para geração de tráfego.
+
+2) Integração
+ - Unificação dos módulos num orquestrador, definição do schema YAML e primeiros perfis (`quick_test`, `apresentacao_final`, `real_world`).
+
+3) Hardening e Documentação
+ - Validação de isolamento de rede, limpeza segura, anonimização de logs e criação de scripts de setup para as plataformas alvo.
+
+4) Validação e Preparação da Entrega
+ - Execução de runs controlados para coletar métricas, refinamento de regras Hashcat e geração de relatórios exportáveis (CSV/JSON/REPORT.md).
+
+Observação sobre contributos: o trabalho técnico e a integração foram conduzidos de forma concentrada por um núcleo da equipa, com contribuições específicas em funcionalidades (captura WiFi, regras, validação) e todas as etapas documentadas no repositório. Essa abordagem permitiu entregar uma plataforma coesa, reproduzível e adequada para avaliação académica.
+
+---
+
+Para dúvidas ou para adaptar a topologia a outra infraestrutura (ex: uso de VM, VLANs ou emulações), posso gerar um guia passo-a-passo específico para esse cenário.
+
+
 # Arquitetura Técnica — HashCrackerLab
 
 Documentação detalhada da arquitetura de rede, componentes de software e fluxos de dados do laboratório.
 
 ---
 
-## Topologia de Rede
+## Sumário
 
-### Diagrama Completo
+- [Topologia de Rede](#topologia-de-rede)
+- [Endereçamento IP](#endereçamento-ip)
+- [Portas e Protocolos Ativos](#portas-e-protocolos-ativos)
+- [Componentes de Software](#componentes-de-software)
+- [Fluxos de Dados](#fluxos-de-dados)
+- [Segurança Operacional](#segurança-operacional)
+- [Hardware Recomendado](#hardware-recomendado)
+
+---
+
+
+## Topologia de Rede
 
 ```mermaid
 graph TB
@@ -33,6 +150,7 @@ graph TB
     INTERNET["Internet ❌<br/>Sem rota default"] -. "BLOQUEADO" .-> ROUTER
 ```
 
+
 ### Endereçamento IP
 
 | Dispositivo | IP | MAC (exemplo) | Ligação | Função |
@@ -43,6 +161,7 @@ graph TB
 | Francisco (Win) | 192.168.100.30 | — | WiFi / Ethernet | Telnet Server + Wireshark |
 | Duarte (Win) | 192.168.100.40 | — | WiFi / Ethernet | Telnet Client |
 | DHCP Pool | 192.168.100.100–200 | — | — | Clientes dinâmicos |
+
 
 ### Portas e Protocolos Ativos
 
@@ -58,7 +177,9 @@ graph TB
 
 ---
 
+
 ## Componentes de Software
+
 
 ### Diagrama de Componentes
 
@@ -102,6 +223,7 @@ graph TD
     WIFI --> HC
     NM --> AC
 ```
+
 
 ### Módulos Detalhados
 
@@ -168,7 +290,9 @@ Adicionalmente:
 
 ---
 
+
 ## Configuração YAML
+
 
 ### Schema
 
@@ -218,6 +342,7 @@ experiment:
     export_formats: list  # csv, json
 ```
 
+
 ### Perfis Incluídos
 
 | Perfil | `count` | Algoritmos | Modos | GPU | CPU | `isolated_network` |
@@ -228,7 +353,9 @@ experiment:
 
 ---
 
+
 ## Fluxos de Dados
+
 
 ### Hash Cracking Pipeline
 
@@ -264,6 +391,7 @@ sequenceDiagram
     Orch->>Orch: Gerar REPORT.md + CSV + JSON
 ```
 
+
 ### WiFi WPA2 Attack Flow
 
 ```mermaid
@@ -295,7 +423,9 @@ sequenceDiagram
 
 ---
 
+
 ## Segurança Operacional
+
 
 ### Medidas Implementadas
 
@@ -312,6 +442,7 @@ sequenceDiagram
 > O ficheiro `.passwords` gerado durante cada run contém passwords em plaintext e é marcado para eliminação. Nunca deve ser commitado no Git — está incluído no `.gitignore`.
 
 ---
+
 
 ## Hardware Recomendado
 
